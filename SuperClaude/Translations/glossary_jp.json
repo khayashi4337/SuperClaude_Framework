@@ -1,0 +1,12 @@
+{
+  "framework": "フレームワーク",
+  "agent": "エージェント",
+  "command": "コマンド",
+  "repository": "リポジトリ",
+  "component": "コンポーネント",
+  "persona": "ペルソナ",
+  "tool": "ツール",
+  "workflow": "ワークフロー",
+  "metadata": "メタデータ",
+  "dependency": "依存関係"
+}
