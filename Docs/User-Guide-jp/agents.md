@@ -1,1029 +1,819 @@
 # SuperClaude エージェントガイド 🤖
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#superclaude-agents-guide-)
+SuperClaudeは、Claude Codeが専門的な知識を必要とするときに呼び出すことができる、14のドメイン専門エージェントを提供します。
 
-SuperClaude は、Claude Code が専門知識を得るために呼び出すことができる 14 のドメイン スペシャリスト エージェントを提供します。
+## 🧪 エージェント起動のテスト
 
-## 🧪 エージェントのアクティベーションのテスト
+このガイドを使用する前に、エージェントの選択が機能することを確認してください：
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#-testing-agent-activation)
+```bash
+# 手動エージェント呼び出しのテスト
+@agent-python-expert "デコレータについて説明して"
+# 振る舞いの例: Pythonエキスパートが詳細な説明で応答します
 
-このガイドを使用する前に、エージェントの選択が機能することを確認してください。
+# セキュリティエージェントの自動起動テスト
+/sc:implement "JWT認証"
+# 振る舞いの例: セキュリティエンジニアが自動的に起動するはずです
 
-```shell
-# Test manual agent invocation
-@agent-python-expert "explain decorators"
-# Example behavior: Python expert responds with detailed explanation
+# フロントエンドエージェントの自動起動テスト
+/sc:implement "レスポンシブなナビゲーションコンポーネント"
+# 振る舞いの例: フロントエンドアーキテクト + Magic MCPが起動するはずです
 
-# Test security agent auto-activation
-/sc:implement "JWT authentication"
-# Example behavior: Security engineer should activate automatically
+# 体系的分析のテスト
+/sc:troubleshoot "遅いAPIパフォーマンス"
+# 振る舞いの例: 根本原因アナリスト + パフォーマンスエンジニアが起動します
 
-# Test frontend agent auto-activation
-/sc:implement "responsive navigation component"  
-# Example behavior: Frontend architect + Magic MCP should activate
-
-# Test systematic analysis
-/sc:troubleshoot "slow API performance"
-# Example behavior: Root-cause analyst + performance engineer activation
-
-# Test combining manual and auto
+# 手動と自動の組み合わせテスト
 /sc:analyze src/
-@agent-refactoring-expert "suggest improvements"
-# Example behavior: Analysis followed by refactoring suggestions
+@agent-refactoring-expert "改善点を提案して"
+# 振る舞いの例: 分析に続いてリファクタリングの提案が行われます
 ```
 
-**テストが失敗した場合**: エージェントファイルが存在する`~/.claude/agents/`か、Claude Codeセッションを再起動してください。
+**テストが失敗した場合**: `~/.claude/agents/`にエージェントファイルが存在するか確認するか、Claude Codeセッションを再起動してください。
 
 ## コアコンセプト
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#core-concepts)
+### SuperClaudeエージェントとは？
+**エージェント**は、Claude Codeの振る舞いを変更するコンテキスト指示として実装された、専門分野のAIドメインエキスパートです。各エージェントは、`SuperClaude/Agents/`ディレクトリにある、ドメイン固有の専門知識、振る舞いパターン、問題解決アプローチを含む、注意深く作成された`.md`ファイルです。
 
-### SuperClaude エージェントとは何ですか?
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#what-are-superclaude-agents)
-
-**エージェントは**、Claude Codeの行動を変更するコンテキスト指示として実装された、専門分野のAIドメインエキスパートです。各エージェントは、ドメイン固有の専門知識、行動パターン、問題解決アプローチを含む、ディレクトリ`.md`内に綿密に作成されたファイルです`SuperClaude/Agents/`。
-
-**重要**: エージェントは別個の AI モデルやソフトウェアではなく、Claude Code が読み取って特殊な動作を採用するコンテキスト構成です。
+**重要**: エージェントは独立したAIモデルやソフトウェアではありません。これらは、Claude Codeが専門的な振る舞いを採用するために読み込むコンテキスト設定です。
 
 ### エージェントの2つの使用方法
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#two-ways-to-use-agents)
-
-#### 1. @agent- プレフィックスを使用した手動呼び出し
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#1-manual-invocation-with-agent--prefix)
-
-```shell
-# Directly invoke a specific agent
-@agent-security "review authentication implementation"
-@agent-frontend "design responsive navigation"
-@agent-architect "plan microservices migration"
+#### 1. `@agent-`プレフィックスによる手動呼び出し
+```bash
+# 特定のエージェントを直接呼び出す
+@agent-security "認証の実装をレビューして"
+@agent-frontend "レスポンシブなナビゲーションを設計して"
+@agent-architect "マイクロサービスへの移行を計画して"
 ```
 
-#### 2. 自動アクティベーション（行動ルーティング）
+#### 2. 自動起動（振る舞いルーティング）
+「自動起動」とは、Claude Codeが振る舞いの指示を読み取り、リクエスト内のキーワードやパターンに基づいて適切なコンテキストを呼び出すことを意味します。SuperClaudeは、Claudeが最も適切な専門家にルーティングするために従う振る舞いのガイドラインを提供します。
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#2-auto-activation-behavioral-routing)
+> **📝 エージェントの「自動起動」の仕組み**:
+> エージェントの起動は自動的なシステムロジックではなく、コンテキストファイル内の振る舞いの指示です。
+> ドキュメントでエージェントが「自動起動する」と記載されている場合、それはClaude Codeが指示を読み取り、
+> リクエスト内のキーワードやパターンに基づいて特定のドメイン専門知識を呼び出すことを意味します。これにより、
+> 基盤となるメカニズムについて透明性を保ちながら、インテリジェントなルーティング体験が生み出されます。
 
-「自動アクティベーション」とは、Claude Codeがリクエスト内のキーワードとパターンに基づいて適切なコンテキストで動作指示を読み取り、エンゲージすることを意味します。SuperClaudeは、Claudeが最適なスペシャリストにルーティングするための動作ガイドラインを提供します。
-
-> **📝 エージェントの「自動アクティベーション」の仕組み**：エージェントのアクティベーションは自動システムロジックではなく、コンテキストファイル内の動作指示です。ドキュメントでエージェントが「自動アクティベート」と記載されている場合、それはClaude Codeが指示を読み取り、リクエスト内のキーワードとパターンに基づいて特定のドメインの専門知識を活用することを意味します。これにより、基盤となるメカニズムを透明化しながら、インテリジェントなルーティング体験を実現します。
-
-```shell
-# These commands auto-activate relevant agents
-/sc:implement "JWT authentication"  # → security-engineer auto-activates
-/sc:design "React dashboard"        # → frontend-architect auto-activates
-/sc:troubleshoot "memory leak"      # → performance-engineer auto-activates
+```bash
+# これらのコマンドは関連するエージェントを自動起動します
+/sc:implement "JWT認証"  # → security-engineerが自動起動
+/sc:design "Reactダッシュボード"        # → frontend-architectが自動起動
+/sc:troubleshoot "メモリリーク"      # → performance-engineerが自動起動
 ```
 
-**MCP サーバーは**、Context7 (ドキュメント作成)、Sequential (分析)、Magic (UI)、Playwright (テスト)、Morphllm (コード変換) などの専用ツールを通じて拡張機能を提供します。
+**MCPサーバー**は、Context7（ドキュメント）、Sequential（分析）、Magic（UI）、Playwright（テスト）、Morphllm（コード変換）などの専門ツールを通じて強化された機能を提供します。
 
-**ドメイン スペシャリストは、**狭い専門分野に焦点を絞り、ジェネラリストのアプローチよりも深く正確なソリューションを提供します。
+**ドメイン専門家**は、狭い専門分野に焦点を当て、ジェネラリストのアプローチよりも深く、より正確なソリューションを提供します。
 
 ### エージェント選択ルール
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#agent-selection-rules)
+**優先順位:**
+1. **手動上書き** - `@agent-[name]`は自動起動より優先されます
+2. **キーワード** - 直接的なドメイン用語が主要なエージェントをトリガーします
+3. **ファイルタイプ** - 拡張子が言語/フレームワークの専門家を起動します
+4. **複雑さ** - 複数ステップのタスクは調整エージェントを呼び出します
+5. **コンテキスト** - 関連する概念が補完的なエージェントをトリガーします
 
-**優先順位の階層:**
+**競合の解決:**
+- 手動呼び出し → 指定されたエージェントが優先されます
+- 複数の一致 → マルチエージェントによる調整
+- 不明瞭なコンテキスト → 要求アナリストの起動
+- 高い複雑さ → システムアーキテクトによる監督
+- 品質に関する懸念 → QAエージェントの自動的な参加
 
-1. **手動オーバーライド**- @agent-[name] は自動アクティベーションよりも優先されます
-2. **キーワード**- 直接的なドメイン用語は主要なエージェントをトリガーします
-3. **ファイルタイプ**- 拡張子は言語/フレームワークの専門家を活性化します
-4. **複雑性**- 複数ステップのタスクには調整エージェントが関与する
-5. **コンテキスト**- 関連概念は補完的なエージェントをトリガーします
-
-**紛争解決:**
-
-- 手動呼び出し → 指定したエージェントが優先されます
-- 複数のマッチング → マルチエージェントコーディネーション
-- 不明瞭なコンテキスト → 要件アナリストの活性化
-- 複雑性が高い → システムアーキテクトの監視
-- 品質に関する懸念 → 自動QAエージェントの組み込み
-
-**選択決定ツリー:**
-
+**選択決定木:**
 ```
-Task Analysis →
-├─ Manual @agent-? → Use specified agent
-├─ Single Domain? → Activate primary agent
-├─ Multi-Domain? → Coordinate specialist agents  
-├─ Complex System? → Add system-architect oversight
-├─ Quality Critical? → Include security + performance + quality agents
-└─ Learning Focus? → Add learning-guide + technical-writer
+タスク分析 →
+├─ 手動 @agent-? → 指定されたエージェントを使用
+├─ 単一ドメインか？ → 主要エージェントを起動
+├─ 複数ドメインか？ → 専門エージェントを調整
+├─ 複雑なシステムか？ → システムアーキテクトの監督を追加
+├─ 品質が重要か？ → セキュリティ + パフォーマンス + 品質エージェントを含める
+└─ 学習が焦点か？ → 学習ガイド + テクニカルライターを追加
 ```
 
-## クイックスタートの例
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quick-start-examples)
+## クイックスタート事例
 
 ### 手動エージェント呼び出し
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#manual-agent-invocation)
-
-```shell
-# Explicitly call specific agents with @agent- prefix
-@agent-python-expert "optimize this data processing pipeline"
-@agent-quality-engineer "create comprehensive test suite"
-@agent-technical-writer "document this API with examples"
-@agent-socratic-mentor "explain this design pattern"
+```bash
+# @agent- プレフィックスで特定のエージェントを明示的に呼び出す
+@agent-python-expert "このデータ処理パイプラインを最適化して"
+@agent-quality-engineer "包括的なテストスイートを作成して"
+@agent-technical-writer "このAPIを例付きで文書化して"
+@agent-socratic-mentor "このデザインパターンを説明して"
 ```
 
 ### 自動エージェント調整
+```bash
+# 自動起動をトリガーするコマンド
+/sc:implement "レート制限付きのJWT認証"
+# → トリガー: security-engineer + backend-architect + quality-engineer
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#automatic-agent-coordination)
+/sc:design "ドキュメント付きのアクセシブルなReactダッシュボード"
+# → トリガー: frontend-architect + learning-guide + technical-writer
 
-```shell
-# Commands that trigger auto-activation
-/sc:implement "JWT authentication with rate limiting"
-# → Triggers: security-engineer + backend-architect + quality-engineer
+/sc:troubleshoot "断続的な障害を伴う遅いデプロイメントパイプライン"
+# → トリガー: devops-architect + performance-engineer + root-cause-analyst
 
-/sc:design "accessible React dashboard with documentation"
-# → Triggers: frontend-architect + learning-guide + technical-writer  
-
-/sc:troubleshoot "slow deployment pipeline with intermittent failures"
-# → Triggers: devops-architect + performance-engineer + root-cause-analyst
-
-/sc:audit "payment processing security vulnerabilities"
-# → Triggers: security-engineer + quality-engineer + refactoring-expert
+/sc:audit "支払い処理のセキュリティ脆弱性"
+# → トリガー: security-engineer + quality-engineer + refactoring-expert
 ```
 
-### 手動と自動のアプローチを組み合わせる
+### 手動と自動アプローチの組み合わせ
+```bash
+# コマンドで開始（自動起動）
+/sc:implement "ユーザープロファイルシステム"
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#combining-manual-and-auto-approaches)
-
-```shell
-# Start with command (auto-activation)
-/sc:implement "user profile system"
-
-# Then explicitly add specialist review
-@agent-security "review the profile system for OWASP compliance"
-@agent-performance-engineer "optimize database queries"
+# その後、専門家のレビューを明示的に追加
+@agent-security "OWASPコンプライアンスについてプロファイルシステムをレビューして"
+@agent-performance-engineer "データベースクエリを最適化して"
 ```
 
 ---
 
-## SuperClaude エージェントチーム 👥
+## SuperClaudeエージェントチーム 👥
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#the-superclaude-agent-team-)
+### アーキテクチャ & システム設計エージェント 🏗️
 
-### アーキテクチャとシステム設計エージェント 🏗️
+### system-architect 🏢
+**専門知識**: スケーラビリティとサービスアーキテクチャに焦点を当てた大規模分散システムの設計
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#architecture--system-design-agents-%EF%B8%8F)
+**自動起動**:
+- キーワード: "architecture", "microservices", "scalability", "system design", "distributed"
+- コンテキスト: マルチサービスシステム、アーキテクチャ上の決定、技術選択
+- 複雑さ: 5つ以上のコンポーネントまたはドメイン間の統合要件
 
-### システムアーキテクト 🏢
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#system-architect-)
-
-**専門分野**：スケーラビリティとサービスアーキテクチャに重点を置いた大規模分散システム設計
-
-**自動アクティベーション**:
-
-- キーワード: 「アーキテクチャ」、「マイクロサービス」、「スケーラビリティ」、「システム設計」、「分散」
-- コンテキスト: マルチサービスシステム、アーキテクチャ上の決定、テクノロジーの選択
-- 複雑さ: 5 つ以上のコンポーネントまたはドメイン間統合要件
-
-**機能**:
-
-- サービス境界の定義とマイクロサービスの分解
-- テクノロジースタックの選択と統合戦略
+**能力**:
+- サービス境界の定義とマイクロサービスの分割
+- 技術スタックの選択と統合戦略
 - スケーラビリティ計画とパフォーマンスアーキテクチャ
 - イベント駆動型アーキテクチャとメッセージングパターン
 - データフロー設計とシステム統合
 
-**例**:
-
-1. **Eコマースプラットフォーム**：イベントソーシングを使用して、ユーザー、製品、支払い、通知サービスのマイクロサービスを設計します。
-2. **リアルタイム分析**：ストリーム処理と時系列ストレージによる高スループットデータ取り込みのためのアーキテクチャ
-3. **マルチテナント SaaS** : テナント分離、共有インフラストラクチャ、水平スケーリング戦略を備えたシステム設計
+**事例**:
+1. **Eコマースプラットフォーム**: ユーザー、製品、支払い、通知サービスのマイクロサービスをイベントソーシングで設計
+2. **リアルタイム分析**: ストリーム処理と時系列ストレージによる高スループットデータ取り込みのためのアーキテクチャ
+3. **マルチテナントSaaS**: テナント分離、共有インフラ、水平スケーリング戦略を備えたシステム設計
 
 ### 成功基準
+- [ ] 応答にシステムレベルの思考が明確に現れている
+- [ ] サービス境界と統合パターンに言及している
+- [ ] スケーラビリティと信頼性に関する考察が含まれている
+- [ ] 技術スタックの推奨が提供されている
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#success-criteria)
+**検証:** `/sc:design "microservices platform"` は system-architect を起動するべきです
+**テスト:** 出力にはサービスの分割と統合パターンが含まれるべきです
+**確認:** インフラに関する懸念事項について devops-architect と調整するべきです
 
-- [ ] 応答に表れたシステムレベルの思考
-- [ ] サービスの境界と統合パターンについて言及する
-- [ ] スケーラビリティと信頼性の考慮を含む
-- [ ] テクノロジースタックの推奨事項を提供する
-
-**検証:** `/sc:design "microservices platform"`システム アーキテクトをアクティブ化する必要があります。  
-**テスト:**出力には、サービスの分解と統合パターンが含まれている必要があります。  
-**チェック:**インフラストラクチャに関する懸念事項については、DevOps アーキテクトと調整する必要があります。
-
-**最適な組み合わせ**: devops-architect (インフラストラクチャ)、performance-engineer (最適化)、security-engineer (コンプライアンス)
+**最適な組み合わせ**: devops-architect (インフラ), performance-engineer (最適化), security-engineer (コンプライアンス)
 
 ---
 
-### バックエンドアーキテクト ⚙️
+### backend-architect ⚙️
+**専門知識**: APIの信頼性とデータの整合性を重視した堅牢なサーバーサイドシステムの設計
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#backend-architect-%EF%B8%8F)
+**自動起動**:
+- キーワード: "API", "backend", "server", "database", "REST", "GraphQL", "endpoint"
+- ファイルタイプ: API仕様書, サーバー設定ファイル, データベーススキーマ
+- コンテキスト: サーバーサイドロジック, データ永続化, API開発
 
-**専門分野**: APIの信頼性とデータの整合性を重視した堅牢なサーバーサイドシステム設計
-
-**自動アクティベーション**:
-
-- キーワード: 「API」、「バックエンド」、「サーバー」、「データベース」、「REST」、「GraphQL」、「エンドポイント」
-- ファイルタイプ: API仕様、サーバー構成、データベーススキーマ
-- コンテキスト: サーバーサイドロジック、データの永続性、API開発
-
-**機能**:
-
-- RESTful および GraphQL API のアーキテクチャと設計パターン
+**能力**:
+- RESTfulおよびGraphQL APIのアーキテクチャとデザインパターン
 - データベーススキーマ設計とクエリ最適化戦略
-- 認証、承認、セキュリティの実装
-- エラー処理、ログ記録、監視の統合
-- キャッシュ戦略とパフォーマンスの最適化
+- 認証、認可、セキュリティの実装
+- エラーハンドリング、ロギング、モニタリングの統合
+- キャッシュ戦略とパフォーマンス最適化
 
-**例**:
+**事例**:
+1. **ユーザー管理API**: ロールベースのアクセス制御とレート制限を備えたJWT認証
+2. **支払い処理**: べき等性と監査証跡を備えたPCI準拠のトランザクション処理
+3. **コンテンツ管理**: キャッシュ、ページネーション、リアルタイム通知を備えたRESTful API
 
-1. **ユーザー管理 API** : ロールベースのアクセス制御とレート制限を備えた JWT 認証
-2. **支払い処理**: べき等性と監査証跡を備えた PCI 準拠のトランザクション処理
-3. **コンテンツ管理**: キャッシュ、ページネーション、リアルタイム通知を備えた RESTful API
-
-**最適な組み合わせ**: security-engineer (認証/セキュリティ)、performance-engineer (最適化)、quality-engineer (テスト)
-
----
-
-### フロントエンドアーキテクト 🎨
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#frontend-architect-)
-
-**専門分野**: アクセシビリティとユーザーエクスペリエンスを重視した最新の Web アプリケーション アーキテクチャ
-
-**自動アクティベーション**:
-
-- キーワード: 「UI」、「フロントエンド」、「React」、「Vue」、「Angular」、「コンポーネント」、「アクセシビリティ」、「レスポンシブ」
-- ファイルタイプ: .jsx、.vue、.ts (フロントエンド)、.css、.scss
-- コンテキスト: ユーザーインターフェース開発、コンポーネント設計、クライアント側アーキテクチャ
-
-**機能**:
-
-- コンポーネントアーキテクチャと設計システムの実装
-- 状態管理パターン (Redux、Zustand、Pinia)
-- アクセシビリティ準拠（WCAG 2.1）とインクルーシブデザイン
-- パフォーマンスの最適化とバンドル分析
-- プログレッシブウェブアプリとモバイルファースト開発
-
-**例**:
-
-1. **ダッシュボードインターフェース**: リアルタイム更新とレスポンシブなグリッドレイアウトによるアクセスしやすいデータ視覚化
-2. **フォーム システム**: 検証、エラー処理、アクセシビリティ機能を備えた複雑なマルチステップ フォーム
-3. **デザインシステム**: 一貫したスタイルとインタラクションパターンを備えた再利用可能なコンポーネントライブラリ
-
-**最適な組み合わせ**: 学習ガイド (ユーザー ガイダンス)、パフォーマンス エンジニア (最適化)、品質エンジニア (テスト)
+**最適な組み合わせ**: security-engineer (認証/セキュリティ), performance-engineer (最適化), quality-engineer (テスト)
 
 ---
 
-### DevOps アーキテクト 🚀
+### frontend-architect 🎨
+**専門知識**: アクセシビリティとユーザーエクスペリエンスに焦点を当てたモダンなWebアプリケーションアーキテクチャ
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#devops-architect-)
+**自動起動**:
+- キーワード: "UI", "frontend", "React", "Vue", "Angular", "component", "accessibility", "responsive"
+- ファイルタイプ: .jsx, .vue, .ts (フロントエンド), .css, .scss
+- コンテキスト: ユーザーインターフェース開発, コンポーネント設計, クライアントサイドアーキテクチャ
 
-**専門分野**: 信頼性の高いソフトウェア配信のためのインフラストラクチャ自動化と展開パイプライン設計
+**能力**:
+- コンポーネントアーキテクチャとデザインシステムの実装
+- 状態管理パターン (Redux, Zustand, Pinia)
+- アクセシビリティ準拠 (WCAG 2.1) とインクルーシブデザイン
+- パフォーマンス最適化とバンドル分析
+- プログレッシブWebアプリとモバイルファースト開発
 
-**自動アクティベーション**:
+**事例**:
+1. **ダッシュボードインターフェース**: リアルタイム更新とレスポンシブグリッドレイアウトを備えたアクセシブルなデータ可視化
+2. **フォームシステム**: 検証、エラーハンドリング、アクセシビリティ機能を備えた複雑なマルチステップフォーム
+3. **デザインシステム**: 一貫したスタイリングとインタラクションパターンを持つ再利用可能なコンポーネントライブラリ
 
-- キーワード: 「デプロイ」、「CI/CD」、「Docker」、「Kubernetes」、「インフラストラクチャ」、「監視」、「パイプライン」
-- ファイルタイプ: Dockerfile、docker-compose.yml、k8s マニフェスト、CI 構成
-- コンテキスト: 導入プロセス、インフラストラクチャ管理、自動化
+**最適な組み合わせ**: learning-guide (ユーザーガイダンス), performance-engineer (最適化), quality-engineer (テスト)
 
-**機能**:
+---
 
-- 自動テストとデプロイメントを備えた CI/CD パイプライン設計
+### devops-architect 🚀
+**専門知識**: 信頼性の高いソフトウェア提供のためのインフラ自動化とデプロイメントパイプラインの設計
+
+**自動起動**:
+- キーワード: "deploy", "CI/CD", "Docker", "Kubernetes", "infrastructure", "monitoring", "pipeline"
+- ファイルタイプ: Dockerfile, docker-compose.yml, k8sマニフェスト, CI設定ファイル
+- コンテキスト: デプロイメントプロセス, インフラ管理, 自動化
+
+**能力**:
+- 自動テストとデプロイメントを備えたCI/CDパイプライン設計
 - コンテナオーケストレーションとKubernetesクラスタ管理
-- Terraform とクラウド プラットフォームを使用した Infrastructure as Code
-- 監視、ログ記録、および可観測性スタックの実装
-- セキュリティスキャンとコンプライアンスの自動化
+- TerraformとクラウドプラットフォームによるInfrastructure as Code
+- モニタリング、ロギング、オブザーバビリティスタックの実装
+- セキュリティスキャンとコンプライアンス自動化
 
-**例**:
+**事例**:
+1. **マイクロサービスのデプロイ**: サービスメッシュ、オートスケーリング、ブルーグリーンリリースを備えたKubernetesデプロイ
+2. **マルチ環境パイプライン**: 自動テスト、セキュリティスキャン、ステージングデプロイを備えたGitOpsワークフロー
+3. **モニタリングスタック**: メトリクス、ログ、トレース、アラートシステムによる包括的なオブザーバビリティ
 
-1. **マイクロサービスのデプロイメント**: サービスメッシュ、自動スケーリング、ブルーグリーンリリースを備えた Kubernetes のデプロイメント
-2. **マルチ環境パイプライン**: 自動テスト、セキュリティスキャン、段階的なデプロイメントを備えた GitOps ワークフロー
-3. **モニタリングスタック**: メトリック、ログ、トレース、アラートシステムによる包括的な監視
+**最適な組み合わせ**: system-architect (インフラ計画), security-engineer (コンプライアンス), performance-engineer (モニタリング)
 
-**最適な職種**: システム アーキテクト (インフラストラクチャ計画)、セキュリティ エンジニア (コンプライアンス)、パフォーマンス エンジニア (監視)
+### 品質 & 分析エージェント 🔍
 
-### 品質・分析エージェント 🔍
+### security-engineer 🔒
+**専門知識**: 脅威モデリングと脆弱性防止に焦点を当てたアプリケーションセキュリティアーキテクチャ
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quality--analysis-agents-)
+**自動起動**:
+- キーワード: "security", "auth", "authentication", "vulnerability", "encryption", "compliance", "OWASP"
+- コンテキスト: セキュリティレビュー, 認証フロー, データ保護要件
+- リスク指標: 支払い処理, ユーザーデータ, APIアクセス, 規制コンプライアンスの必要性
 
-### セキュリティエンジニア 🔒
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#security-engineer-)
-
-**専門分野**: 脅威モデリングと脆弱性防止に重点を置いたアプリケーション セキュリティ アーキテクチャ
-
-**自動アクティベーション**:
-
-- キーワード: 「セキュリティ」、「認証」、「脆弱性」、「暗号化」、「コンプライアンス」、「OWASP」
-- コンテキスト: セキュリティレビュー、認証フロー、データ保護要件
-- リスク指標: 支払い処理、ユーザーデータ、API アクセス、規制遵守の必要性
-
-**機能**:
-
-- 脅威モデルと攻撃対象領域分析
-- 安全な認証と認可の設計 (OAuth、JWT、SAML)
+**能力**:
+- 脅威モデリングと攻撃対象領域の分析
+- 安全な認証・認可設計 (OAuth, JWT, SAML)
 - データ暗号化戦略と鍵管理
 - 脆弱性評価と侵入テストのガイダンス
-- セキュリティコンプライアンス（GDPR、HIPAA、PCI-DSS）の実装
+- セキュリティコンプライアンス (GDPR, HIPAA, PCI-DSS) の実装
 
-**例**:
+**事例**:
+1. **OAuth実装**: トークンリフレッシュとロールベースアクセスによる安全なマルチテナント認証
+2. **APIセキュリティ**: レート制限, 入力検証, SQLインジェクション防止, セキュリティヘッダ
+3. **データ保護**: 保存時/転送時の暗号化, 鍵のローテーション, プライバシーバイデザインアーキテクチャ
 
-1. **OAuth 実装**: トークンの更新とロールベースのアクセスによる安全なマルチテナント認証
-2. **API セキュリティ**: レート制限、入力検証、SQL インジェクション防止、セキュリティ ヘッダー
-3. **データ保護**: 保存時/転送時の暗号化、キーローテーション、プライバシーバイデザインアーキテクチャ
-
-**最適な人材**: バックエンド アーキテクト (API セキュリティ)、品質エンジニア (セキュリティ テスト)、根本原因アナリスト (インシデント対応)
+**最適な組み合わせ**: backend-architect (APIセキュリティ), quality-engineer (セキュリティテスト), root-cause-analyst (インシデント対応)
 
 ---
 
-### パフォーマンスエンジニア ⚡
+### performance-engineer ⚡
+**専門知識**: スケーラビリティとリソース効率に焦点を当てたシステムパフォーマンスの最適化
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#performance-engineer-)
+**自動起動**:
+- キーワード: "performance", "slow", "optimization", "bottleneck", "latency", "memory", "CPU"
+- コンテキスト: パフォーマンス問題, スケーラビリティの懸念, リソース制約
+- メトリクス: 応答時間 >500ms, 高いメモリ使用量, 低いスループット
 
-**専門分野**：スケーラビリティとリソース効率を重視したシステムパフォーマンスの最適化
-
-**自動アクティベーション**:
-
-- キーワード: 「パフォーマンス」、「遅い」、「最適化」、「ボトルネック」、「レイテンシ」、「メモリ」、「CPU」
-- コンテキスト: パフォーマンスの問題、スケーラビリティの懸念、リソースの制約
-- メトリクス: 応答時間 >500 ミリ秒、メモリ使用量が多い、スループットが低い
-
-**機能**:
-
+**能力**:
 - パフォーマンスプロファイリングとボトルネックの特定
 - データベースクエリの最適化とインデックス戦略
-- キャッシュ実装（Redis、CDN、アプリケーションレベル）
-- 負荷テストと容量計画
-- メモリ管理とリソースの最適化
+- キャッシュ実装 (Redis, CDN, アプリケーションレベル)
+- 負荷テストとキャパシティプランニング
+- メモリ管理とリソース最適化
 
-**例**:
+**事例**:
+1. **API最適化**: キャッシュとクエリ最適化により応答時間を2秒から200msに短縮
+2. **データベーススケーリング**: リードレプリカ、接続プーリング、クエリ結果キャッシュの実装
+3. **フロントエンドパフォーマンス**: バンドル最適化、遅延読み込み、CDN実装により3秒未満の読み込み時間を実現
 
-1. **API最適化**: キャッシュとクエリの最適化により、応答時間を2秒から200ミリ秒に短縮
-2. **データベースのスケーリング**: リードレプリカ、接続プール、クエリ結果のキャッシュを実装する
-3. **フロントエンドのパフォーマンス**: バンドルの最適化、遅延読み込み、および CDN 実装により、読み込み時間が 3 秒未満に短縮されます。
-
-**最適な組み合わせ**: システム アーキテクト (スケーラビリティ)、DevOps アーキテクト (インフラストラクチャ)、ルート原因アナリスト (デバッグ)
+**最適な組み合わせ**: system-architect (スケーラビリティ), devops-architect (インフラ), root-cause-analyst (デバッグ)
 
 ---
 
-### 根本原因分析者 🔍
+### root-cause-analyst 🔍
+**専門知識**: 証拠に基づく分析と仮説検定を用いた体系的な問題調査
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#root-cause-analyst-)
+**自動起動**:
+- キーワード: "bug", "issue", "problem", "debugging", "investigation", "troubleshoot", "error"
+- コンテキスト: システム障害, 予期せぬ振る舞い, 複雑な複数コンポーネントの問題
+- 複雑さ: 体系的な調査を必要とするシステム横断的な問題
 
-**専門分野**：証拠に基づく分析と仮説検定を用いた体系的な問題調査
-
-**自動アクティベーション**:
-
-- キーワード: 「バグ」、「問題」、「問題」、「デバッグ」、「調査」、「トラブルシューティング」、「エラー」
-- コンテキスト: システム障害、予期しない動作、複雑な複数コンポーネントの問題
-- 複雑性: 体系的な調査を必要とするシステム間問題
-
-**機能**:
-
-- 体系的なデバッグ方法論と根本原因分析
-- システム間のエラー相関と依存関係のマッピング
+**能力**:
+- 体系的なデバッグ手法と根本原因分析
+- システム間のエラー相関と依存関係マッピング
 - 障害調査のためのログ分析とパターン認識
-- 複雑な問題に対する仮説形成と検証
-- インシデント対応と事後分析手順
+- 複雑な問題に対する仮説の形成と検証
+- インシデント対応と事後分析の手順
 
-**例**:
+**事例**:
+1. **データベース接続障害**: 接続プール、ネットワークタイムアウト、リソース制限にわたる断続的な障害を追跡
+2. **支払い処理エラー**: APIログ、データベースの状態、外部サービスの応答を通じてトランザクションの失敗を調査
+3. **パフォーマンス低下**: メトリクスの相関、リソース使用量、コード変更を通じて段階的な速度低下を分析
 
-1. **データベース接続障害**: 接続プール、ネットワーク タイムアウト、リソース制限にわたる断続的な障害をトレースします。
-2. **支払い処理エラー**: APIログ、データベースの状態、外部サービスの応答を通じてトランザクションの失敗を調査します。
-3. **パフォーマンスの低下**: メトリクスの相関関係、リソースの使用状況、コードの変更を通じて、段階的な速度低下を分析します。
-
-**最適な担当者**: パフォーマンス エンジニア (パフォーマンスの問題)、セキュリティ エンジニア (セキュリティ インシデント)、品質エンジニア (テストの失敗)
+**最適な組み合わせ**: performance-engineer (パフォーマンス問題), security-engineer (セキュリティインシデント), quality-engineer (テスト失敗)
 
 ---
 
-### 品質エンジニア ✅
+### quality-engineer ✅
+**専門知識**: 自動化とカバレッジに焦点を当てた包括的なテスト戦略と品質保証
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quality-engineer-)
+**自動起動**:
+- キーワード: "test", "testing", "quality", "QA", "validation", "coverage", "automation"
+- コンテキスト: テスト計画, 品質ゲート, 検証要件
+- 品質懸念: コードカバレッジ < 80%, テスト自動化の欠如, 品質問題
 
-**専門分野**:自動化とカバレッジに重点を置いた包括的なテスト戦略と品質保証
-
-**自動アクティベーション**:
-
-- キーワード: 「テスト」、「テスト」、「品質」、「QA」、「検証」、「カバレッジ」、「自動化」
-- コンテキスト: テスト計画、品質ゲート、検証要件
-- 品質に関する懸念: コードカバレッジ <80%、テスト自動化の欠如、品質の問題
-
-**機能**:
-
-- テスト戦略設計（ユニット、統合、E2E、パフォーマンステスト）
+**能力**:
+- テスト戦略設計 (単体, 統合, E2E, パフォーマンステスト)
 - テスト自動化フレームワークの実装とCI/CD統合
-- 品質指標の定義と監視（カバレッジ、欠陥率）
-- エッジケースの特定と境界テストのシナリオ
+- 品質メトリクスの定義と監視 (カバレッジ, 欠陥率)
+- エッジケースの特定と境界値テストのシナリオ
 - アクセシビリティテストとコンプライアンス検証
 
-**例**:
+**事例**:
+1. **Eコマーステスト**: ユーザーフロー、支払い処理、在庫管理をカバーする包括的なテストスイート
+2. **APIテスト**: REST/GraphQL APIの自動契約テスト、負荷テスト、セキュリティテスト
+3. **アクセシビリティ検証**: 自動および手動のアクセシビリティ監査によるWCAG 2.1準拠テスト
 
-1. **Eコマーステスト**: ユーザーフロー、支払い処理、在庫管理を網羅した包括的なテストスイート
-2. **API テスト**: REST/GraphQL API の自動契約テスト、負荷テスト、セキュリティ テスト
-3. **アクセシビリティ検証**：自動および手動のアクセシビリティ監査による WCAG 2.1 準拠テスト
-
-**最適な職種**: セキュリティ エンジニア (セキュリティ テスト)、パフォーマンス エンジニア (負荷テスト)、フロントエンド アーキテクト (UI テスト)
+**最適な組み合わせ**: security-engineer (セキュリティテスト), performance-engineer (負荷テスト), frontend-architect (UIテスト)
 
 ---
 
-### リファクタリングの専門家 🔧
+### refactoring-expert 🔧
+**専門知識**: 体系的なリファクタリングと技術的負債管理によるコード品質の改善
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#refactoring-expert-)
+**自動起動**:
+- キーワード: "refactor", "clean code", "technical debt", "SOLID", "maintainability", "code smell"
+- コンテキスト: レガシーコードの改善, アーキテクチャの更新, コード品質問題
+- 品質指標: 高い複雑度, コードの重複, 低いテストカバレッジ
 
-**専門分野**：体系的なリファクタリングと技術的負債管理によるコード品質の改善
-
-**自動アクティベーション**:
-
-- キーワード: 「リファクタリング」、「クリーンコード」、「技術的負債」、「SOLID」、「保守性」、「コード臭」
-- コンテキスト: レガシーコードの改善、アーキテクチャの更新、コード品質の問題
-- 品質指標: 複雑性が高い、コードの重複がある、テスト範囲が狭い
-
-**機能**:
-
-- SOLID原則の適用と設計パターンの実装
-- コードの臭いの特定と体系的な排除
+**能力**:
+- SOLID原則の適用とデザインパターンの実装
+- コードの匂いの特定と体系的な排除
 - レガシーコードの近代化戦略と移行計画
-- 技術的負債の評価と優先順位付けのフレームワーク
+- 技術的負債の評価と優先順位付けフレームワーク
 - コード構造の改善とアーキテクチャのリファクタリング
 
-**例**:
+**事例**:
+1. **レガシーモダナイゼーション**: モノリシックなアプリケーションを、テスト容易性を向上させたモジュラーアーキテクチャに変換
+2. **デザインパターン**: 支払い処理にStrategyパターンを実装し、結合度を下げて拡張性を向上
+3. **コードクリーンアップ**: 重複コードの削除、命名規則の改善、再利用可能なコンポーネントの抽出
 
-1. **レガシーモダナイゼーション**: テスト容易性を向上させたモノリシックアプリケーションをモジュール型アーキテクチャに変換する
-2. **デザインパターン**: 支払い処理に戦略パターンを実装して結合を減らし、拡張性を向上させる
-3. **コードのクリーンアップ**: 重複したコードを削除し、命名規則を改善し、再利用可能なコンポーネントを抽出します。
-
-**最適な組み合わせ**: system-architect (アーキテクチャの改善)、quality-engineer (テスト戦略)、python-expert (言語固有のパターン)
+**最適な組み合わせ**: system-architect (アーキテクチャ改善), quality-engineer (テスト戦略), python-expert (言語固有パターン)
 
 ### 専門開発エージェント 🎯
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#specialized-development-agents-)
+### python-expert 🐍
+**専門知識**: モダンなフレームワークとパフォーマンスを重視した本番環境対応のPython開発
 
-### Python エキスパート 🐍
+**自動起動**:
+- キーワード: "Python", "Django", "FastAPI", "Flask", "asyncio", "pandas", "pytest"
+- ファイルタイプ: .py, requirements.txt, pyproject.toml, Pipfile
+- コンテキスト: Python開発タスク, API開発, データ処理, テスト
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#python-expert-)
-
-**専門分野**: 最新のフレームワークとパフォーマンスを重視した、本番環境対応の Python 開発
-
-**自動アクティベーション**:
-
-- キーワード: 「Python」、「Django」、「FastAPI」、「Flask」、「asyncio」、「pandas」、「pytest」
-- ファイルタイプ: .py、requirements.txt、pyproject.toml、Pipfile
-- コンテキスト: Python 開発タスク、API 開発、データ処理、テスト
-
-**機能**:
-
-- 最新のPythonアーキテクチャパターンとフレームワークの選択
-- asyncio と並行未来を用いた非同期プログラミング
-- プロファイリングとアルゴリズムの改善によるパフォーマンスの最適化
+**能力**:
+- モダンなPythonアーキテクチャパターンとフレームワーク選択
+- asyncioとconcurrent futuresによる非同期プログラミング
+- プロファイリングとアルゴリズム改善によるパフォーマンス最適化
 - pytest、フィクスチャ、テスト自動化によるテスト戦略
-- pip、poetry、Docker を使用したパッケージ管理とデプロイメント
+- pip、poetry、Dockerによるパッケージ管理とデプロイ
 
-**例**:
+**事例**:
+1. **FastAPIマイクロサービス**: Pydantic検証、依存性注入、OpenAPIドキュメントを備えた高性能非同期API
+2. **データパイプライン**: エラーハンドリング、ロギング、大規模データセットの並列処理を備えたPandasベースのETL
+3. **Djangoアプリケーション**: カスタムユーザーモデル、APIエンドポイント、包括的なテストカバレッジを備えたフルスタックWebアプリ
 
-1. **FastAPI マイクロサービス**: Pydantic 検証、依存性注入、OpenAPI ドキュメントを備えた高性能非同期 API
-2. **データ パイプライン**: エラー処理、ログ記録、大規模データセットの並列処理を備えた Pandas ベースの ETL
-3. **Django アプリケーション**: カスタム ユーザー モデル、API エンドポイント、包括的なテスト カバレッジを備えたフルスタック Web アプリ
-
-**最適な職種**: バックエンド アーキテクト (API 設計)、品質エンジニア (テスト)、パフォーマンス エンジニア (最適化)
+**最適な組み合わせ**: backend-architect (API設計), quality-engineer (テスト), performance-engineer (最適化)
 
 ---
 
-### 要件アナリスト 📝
+### requirements-analyst 📝
+**専門知識**: 体系的なステークホルダー分析による要求発見と仕様策定
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#requirements-analyst-)
+**自動起動**:
+- キーワード: "requirements", "specification", "PRD", "user story", "functional", "scope", "stakeholder"
+- コンテキスト: プロジェクト開始, 不明瞭な要求, スコープ定義の必要性
+- 複雑さ: 複数ステークホルダーのプロジェクト, 不明瞭な目標, 矛盾する要求
 
-**専門分野**：体系的なステークホルダー分析による要件発見と仕様策定
-
-**自動アクティベーション**:
-
-- キーワード: 「要件」、「仕様」、「PRD」、「ユーザーストーリー」、「機能」、「スコープ」、「ステークホルダー」
-- 背景: プロジェクトの開始、不明確な要件、スコープ定義の必要性
-- 複雑さ: 複数の利害関係者が関わるプロジェクト、不明確な目標、相反する要件
-
-**機能**:
-
-- ステークホルダーへのインタビューやワークショップを通じた要件抽出
-- 受け入れ基準と完了の定義を含むユーザーストーリーの記述
-- 機能仕様と非機能仕様のドキュメント
-- ステークホルダー分析と要件優先順位付けフレームワーク
+**能力**:
+- ステークホルダーインタビューとワークショップによる要求引き出し
+- 受け入れ基準と完了の定義を持つユーザーストーリーの作成
+- 機能的および非機能的な仕様書の文書化
+- ステークホルダー分析と要求の優先順位付けフレームワーク
 - スコープ管理と変更管理プロセス
 
-**例**:
+**事例**:
+1. **製品要求仕様書(PRD)**: ユーザーペルソナ、機能仕様、成功指標を含むフィンテックモバイルアプリの包括的なPRD
+2. **API仕様書**: エラーハンドリング、セキュリティ、パフォーマンス基準を含む支払い処理APIの詳細な要求
+3. **移行要求**: データ移行、ユーザートレーニング、ロールバック手順を含むレガシーシステムの近代化要求
 
-1. **製品要件ドキュメント**: ユーザー ペルソナ、機能仕様、成功指標を含む、フィンテック モバイル アプリの包括的な PRD
-2. **API仕様**: エラー処理、セキュリティ、パフォーマンス基準を含む支払い処理APIの詳細な要件
-3. **移行要件**: データ移行、ユーザートレーニング、ロールバック手順を含むレガシーシステムの近代化要件
+**最適な組み合わせ**: system-architect (技術的実現可能性), technical-writer (文書化), learning-guide (ユーザーガイダンス)
 
-**最適な組み合わせ**: システムアーキテクト (技術的実現可能性)、テクニカルライター (ドキュメント作成)、学習ガイド (ユーザーガイダンス)
+### コミュニケーション & 学習エージェント 📚
 
-### コミュニケーションと学習エージェント 📚
+### technical-writer 📚
+**専門知識**: 読者分析と明確さに焦点を当てた技術文書とコミュニケーション
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#communication--learning-agents-)
+**自動起動**:
+- キーワード: "documentation", "readme", "API docs", "user guide", "technical writing", "manual"
+- コンテキスト: 文書化要求, APIドキュメント, ユーザーガイド, 技術的説明
+- ファイルタイプ: .md, .rst, API仕様書, 文書ファイル
 
-### テクニカルライター 📚
+**能力**:
+- 技術文書のアーキテクチャと情報デザイン
+- 異なるスキルレベルに対する読者分析とコンテンツターゲティング
+- 実用的な例と統合ガイダンスを含むAPI文書化
+- ステップバイステップの手順とトラブルシューティングを含むユーザーガイド作成
+- アクセシビリティ基準の適用とインクルーシブな言語の使用
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#technical-writer-)
-
-**専門分野**: 視聴者分析と明確さを重視した技術文書作成とコミュニケーション
-
-**自動アクティベーション**:
-
-- キーワード: 「ドキュメント」、「Readme」、「API ドキュメント」、「ユーザー ガイド」、「テクニカル ライティング」、「マニュアル」
-- コンテキスト: ドキュメントのリクエスト、API ドキュメント、ユーザー ガイド、技術的な説明
-- ファイルタイプ: .md、.rst、API 仕様、ドキュメント ファイル
-
-**機能**:
-
-- 技術文書のアーキテクチャと情報設計
-- さまざまなスキルレベルに合わせたオーディエンス分析とコンテンツターゲティング
-- 動作例と統合ガイダンスを含む API ドキュメント
-- ステップバイステップの手順とトラブルシューティングを記載したユーザーガイドの作成
-- アクセシビリティ基準の適用と包括的な言語の使用
-
-**例**:
-
+**事例**:
 1. **APIドキュメント**: 認証、エンドポイント、例、SDK統合ガイドを含む包括的なREST APIドキュメント
-2. **ユーザーマニュアル**: スクリーンショット、トラブルシューティング、FAQセクションを含むステップバイステップのインストールおよび構成ガイド
-3. **技術仕様**: 図、データフロー、実装の詳細を含むシステムアーキテクチャドキュメント
+2. **ユーザーマニュアル**: スクリーンショット、トラブルシューティング、FAQセクションを含むステップバイステップのインストール・設定ガイド
+3. **技術仕様書**: ダイアグラム、データフロー、実装詳細を含むシステムアーキテクチャ文書
 
-**最適な組み合わせ**: requirements-analyst (仕様の明確化)、learning-guide (教育コンテンツ)、frontend-architect (UI ドキュメント)
+**最適な組み合わせ**: requirements-analyst (仕様の明確化), learning-guide (教育コンテンツ), frontend-architect (UI文書化)
 
 ---
 
-### 学習ガイド 🎓
+### learning-guide 🎓
+**専門知識**: スキル開発とメンターシップに焦点を当てた教育コンテンツデザインと段階的学習
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#learning-guide-)
+**自動起動**:
+- キーワード: "explain", "learn", "tutorial", "beginner", "teaching", "education", "training"
+- コンテキスト: 教育的要求, 概念説明, スキル開発, 学習パス
+- 複雑さ: ステップバイステップの分解と段階的な理解を必要とする複雑なトピック
 
-**専門分野**：スキル開発とメンターシップに重点を置いた教育コンテンツの設計と漸進的学習
-
-**自動アクティベーション**:
-
-- キーワード: 「説明」、「学習」、「チュートリアル」、「初心者」、「指導」、「教育」、「トレーニング」
-- コンテキスト: 教育的なリクエスト、概念の説明、スキル開発、学習パス
-- 複雑さ: 段階的な分解と段階的な理解を必要とする複雑なトピック
-
-**機能**:
-
+**能力**:
 - 段階的なスキル開発を伴う学習パスの設計
 - 類推と例による複雑な概念の説明
-- 実践的な演習を含むインタラクティブなチュートリアルの作成
-- スキル評価と能力評価のフレームワーク
-- メンターシップ戦略と個別学習アプローチ
+- 実践的な演習を含むインタラクティブなチュートリアル作成
+- スキル評価と能力評価フレームワーク
+- メンターシップ戦略と個別化された学習アプローチ
 
-**例**:
+**事例**:
+1. **プログラミングチュートリアル**: 実践的な演習、コード例、段階的な複雑さを備えたインタラクティブなReactチュートリアル
+2. **概念説明**: 現実世界の例、視覚的な図、練習問題を通してデータベースの正規化を説明
+3. **スキル評価**: 実践的なプロジェクトとフィードバックによるフルスタック開発のための包括的な評価フレームワーク
 
-1. **プログラミングチュートリアル**: 実践的な演習、コード例、段階的な複雑さを備えたインタラクティブな React チュートリアル
-2. **概念の説明**: 視覚的な図と練習問題を使った実際の例を通してデータベースの正規化を説明します
-3. **スキル評価**：実践的なプロジェクトとフィードバックによるフルスタック開発のための包括的な評価フレームワーク
-
-**最適な対象者**: テクニカルライター (教育ドキュメント)、フロントエンドアーキテクト (インタラクティブ学習)、要件アナリスト (学習目標)
+**最適な組み合わせ**: technical-writer (教育文書), frontend-architect (インタラクティブ学習), requirements-analyst (学習目標)
 
 ---
 
 ## エージェントの調整と統合 🤝
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#agent-coordination--integration-)
-
 ### 調整パターン
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#coordination-patterns)
-
 **アーキテクチャチーム**:
-
-- **フルスタック開発**：フロントエンドアーキテクト + バックエンドアーキテクト + セキュリティエンジニア + 品質エンジニア
-- **システム設計**: システムアーキテクト + DevOps アーキテクト + パフォーマンスエンジニア + セキュリティエンジニア
-- **レガシーモダナイゼーション**：リファクタリング専門家 + システムアーキテクト + 品質エンジニア + テクニカルライター
+- **フルスタック開発**: frontend-architect + backend-architect + security-engineer + quality-engineer
+- **システム設計**: system-architect + devops-architect + performance-engineer + security-engineer
+- **レガシーモダナイゼーション**: refactoring-expert + system-architect + quality-engineer + technical-writer
 
 **品質チーム**:
-
-- **セキュリティ監査**: セキュリティエンジニア + 品質エンジニア + 根本原因アナリスト + 要件アナリスト
-- **パフォーマンス最適化**: パフォーマンスエンジニア + システムアーキテクト + DevOps アーキテクト + 根本原因アナリスト
-- **テスト戦略**: 品質エンジニア + セキュリティエンジニア + パフォーマンスエンジニア + フロントエンドアーキテクト
+- **セキュリティ監査**: security-engineer + quality-engineer + root-cause-analyst + requirements-analyst
+- **パフォーマンス最適化**: performance-engineer + system-architect + devops-architect + root-cause-analyst
+- **テスト戦略**: quality-engineer + security-engineer + performance-engineer + frontend-architect
 
 **コミュニケーションチーム**:
+- **ドキュメンテーションプロジェクト**: technical-writer + requirements-analyst + learning-guide + ドメイン専門家
+- **学習プラットフォーム**: learning-guide + frontend-architect + technical-writer + quality-engineer
+- **APIドキュメント**: backend-architect + technical-writer + security-engineer + quality-engineer
 
-- **ドキュメンテーションプロジェクト**: テクニカルライター + 要件アナリスト + 学習ガイド + ドメインエキスパート
-- **学習プラットフォーム**: 学習ガイド + フロントエンドアーキテクト + テクニカルライター + 品質エンジニア
-- **APIドキュメント**: バックエンドアーキテクト + テクニカルライター + セキュリティエンジニア + 品質エンジニア
+### MCPサーバー統合
 
-### MCP サーバー統合
+**MCPサーバーによる強化された能力**:
+- **Context7**: すべてのアーキテクトと専門家のための公式ドキュメントパターン
+- **Sequential**: 根本原因アナリスト、システムアーキテクト、パフォーマンスエンジニアのためのマルチステップ分析
+- **Magic**: フロントエンドアーキテクト、学習ガイドのインタラクティブコンテンツのためのUI生成
+- **Playwright**: 品質エンジニアのためのブラウザテスト、フロントエンドアーキテクトのためのアクセシビリティ検証
+- **Morphllm**: リファクタリングエキスパートのためのコード変換、Pythonエキスパートのための一括変更
+- **Serena**: すべてのエージェントのプロジェクトメモリ、セッション間のコンテキスト保存
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#mcp-server-integration)
-
-**MCP サーバーによる拡張機能**:
-
-- **コンテキスト7** : すべての建築家と専門家のための公式ドキュメントパターン
-- **シーケンシャル**: 根本原因アナリスト、システムアーキテクト、パフォーマンスエンジニア向けの多段階分析
-- **マジック**：フロントエンドアーキテクト、学習ガイドインタラクティブコンテンツのためのUI生成
-- **Playwright** : 品質エンジニア向けのブラウザテスト、フロントエンドアーキテクト向けのアクセシビリティ検証
-- **Morphllm** : refactoring-expert のコード変換、python-expert の一括変更
-- **Serena** : すべてのエージェントのプロジェクトメモリ、セッション間のコンテキスト保存
-
-### エージェントのアクティベーションのトラブルシューティング
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#troubleshooting-agent-activation)
+### エージェント起動のトラブルシューティング
 
 ## トラブルシューティング
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#troubleshooting)
+トラブルシューティングのヘルプについては、以下を参照してください：
+- [一般的な問題](../Reference-jp/common-issues.md) - よくある問題の簡単な修正
+- [トラブルシューティングガイド](../Reference-jp/troubleshooting.md) - 包括的な問題解決
 
-トラブルシューティングのヘルプについては、以下を参照してください。
-
-- [よくある問題](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Reference/common-issues.md)- よくある問題に対するクイック修正
-- [トラブルシューティングガイド](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Reference/troubleshooting.md)- 包括的な問題解決
-
-### よくある問題
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#common-issues)
-
-- **エージェントのアクティベーションなし**: ドメインキーワード「セキュリティ」、「パフォーマンス」、「フロントエンド」を使用します
-- **間違ったエージェントが選択されました**: エージェントのドキュメントでトリガーキーワードを確認してください
-- **エージェントが多すぎる場合**：主要ドメインのキーワードに焦点を当てるか、`/sc:focus [domain]`
-- **エージェントが連携していない**: タスクの複雑さを増やすか、マルチドメインキーワードを使用する
+### 一般的な問題
+- **エージェントが起動しない**: "security", "performance", "frontend" などのドメインキーワードを使用する
+- **間違ったエージェントが選択される**: エージェントのドキュメントでトリガーキーワードを確認する
+- **エージェントが多すぎる**: 主要なドメインにキーワードを集中させるか、`/sc:focus [domain]` を使用する
+- **エージェントが連携しない**: タスクの複雑度を上げるか、複数ドメインのキーワードを使用する
 - **エージェントの専門知識の不一致**: より具体的な技術用語を使用する
 
 ### 即時修正
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#immediate-fixes)
-
-- **エージェントの強制アクティベーション**: リクエストで明示的なドメインキーワードを使用する
-- **エージェントの選択をリセット**: エージェントの状態をリセットするには、Claude Code セッションを再起動します。
-- **エージェントのパターンを確認する**: エージェントのドキュメントでトリガーキーワードを確認する
-- **基本的なアクティベーションをテストする**:`/sc:implement "security auth"`セキュリティエンジニアのテストを試みる
+- **エージェントの強制起動**: リクエストに明示的なドメインキーワードを使用する
+- **エージェント選択のリセット**: エージェントの状態をリセットするためにClaude Codeセッションを再起動する
+- **エージェントパターンの確認**: エージェントのドキュメントでトリガーキーワードを確認する
+- **基本的な起動テスト**: `/sc:implement "security auth"` を試してsecurity-engineerをテストする
 
 ### エージェント固有のトラブルシューティング
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#agent-specific-troubleshooting)
-
-**セキュリティエージェントなし:**
-
-```shell
-# Problem: Security concerns not triggering security-engineer
-# Quick Fix: Use explicit security keywords
-"implement authentication"              # Generic - may not trigger
-"implement JWT authentication security" # Explicit - triggers security-engineer
-"secure user login with encryption"    # Security focus - triggers security-engineer
+**セキュリティエージェントがいない:**
+```bash
+# 問題: セキュリティに関する懸念がsecurity-engineerをトリガーしない
+# 簡単な修正: 明示的なセキュリティキーワードを使用する
+"implement authentication"              # 一般的 - トリガーしないかもしれない
+"implement JWT authentication security" # 明示的 - security-engineerをトリガーする
+"secure user login with encryption"    # セキュリティに焦点 - security-engineerをトリガーする
 ```
 
-**パフォーマンスエージェントなし:**
-
-```shell
-# Problem: Performance issues not triggering performance-engineer
-# Quick Fix: Use performance-specific terminology
-"make it faster"                       # Vague - may not trigger
-"optimize slow database queries"       # Specific - triggers performance-engineer  
-"reduce API latency and bottlenecks"   # Performance focus - triggers performance-engineer
+**パフォーマンスエージェントがいない:**
+```bash
+# 問題: パフォーマンス問題がperformance-engineerをトリガーしない
+# 簡単な修正: パフォーマンス固有の用語を使用する
+"make it faster"                       # 曖昧 - トリガーしないかもしれない
+"optimize slow database queries"       # 具体的 - performance-engineerをトリガーする
+"reduce API latency and bottlenecks"   # パフォーマンスに焦点 - performance-engineerをトリガーする
 ```
 
-**アーキテクチャエージェントなし:**
-
-```shell
-# Problem: System design not triggering architecture agents
-# Quick Fix: Use architectural keywords
-"build an app"                         # Generic - triggers basic agents
-"design microservices architecture"    # Specific - triggers system-architect
-"scalable distributed system design"   # Architecture focus - triggers system-architect
+**アーキテクチャエージェントがいない:**
+```bash
+# 問題: システム設計がアーキテクチャエージェントをトリガーしない
+# 簡単な修正: アーキテクチャ関連のキーワードを使用する
+"build an app"                         # 一般的 - 基本的なエージェントをトリガーする
+"design microservices architecture"    # 具体的 - system-architectをトリガーする
+"scalable distributed system design"   # アーキテクチャに焦点 - system-architectをトリガーする
 ```
 
 **間違ったエージェントの組み合わせ:**
-
-```shell
-# Problem: Getting frontend agent for backend tasks
-# Quick Fix: Use domain-specific terminology
-"create user interface"                # May trigger frontend-architect
-"create REST API endpoints"            # Specific - triggers backend-architect
-"implement server-side authentication" # Backend focus - triggers backend-architect
+```bash
+# 問題: バックエンドのタスクにフロントエンドエージェントが表示される
+# 簡単な修正: ドメイン固有の用語を使用する
+"create user interface"                # frontend-architectをトリガーするかもしれない
+"create REST API endpoints"            # 具体的 - backend-architectをトリガーする
+"implement server-side authentication" # バックエンドに焦点 - backend-architectをトリガーする
 ```
 
 ### サポートレベル
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#support-levels)
-
-**クイックフィックス:**
-
+**簡単な修正:**
 - エージェントトリガーテーブルから明示的なドメインキーワードを使用する
-- Claude Codeセッションを再起動してみてください
+- Claude Codeセッションの再起動を試す
 - 混乱を避けるために単一のドメインに焦点を当てる
 
 **詳細なヘルプ:**
-
-- エージェントのインストールに関する問題については、[一般的な問題ガイド](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Reference/common-issues.md)を参照してください。
+- エージェントのインストール問題については、[一般的な問題ガイド](../Reference-jp/common-issues.md)を参照
 - 対象エージェントのトリガーキーワードを確認する
 
 **専門家によるサポート:**
-
-- 使用`SuperClaude install --diagnose`
-- 協調分析については[診断リファレンスガイド](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Reference/diagnostic-reference.md)を参照してください
+- `SuperClaude install --diagnose` を使用する
+- 連携分析については[診断リファレンスガイド](../Reference-jp/diagnostic-reference.md)を参照
 
 **コミュニティサポート:**
-
-- [GitHub Issues](https://github.com/SuperClaude-Org/SuperClaude_Framework/issues)で問題を報告してください[](https://github.com/SuperClaude-Org/SuperClaude_Framework/issues)
-- 予想されるエージェントのアクティベーションと実際のエージェントのアクティベーションの例を含める
+- [GitHub Issues](https://github.com/SuperClaude-Org/SuperClaude_Framework/issues)で問題を報告する
+- 期待されるエージェント起動と実際のエージェント起動の例を含める
 
 ### 成功の検証
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#success-validation)
-
-エージェントの修正を適用した後、次のようにテストします。
-
-- [ ] ドメイン固有のリクエストは適切なエージェントをアクティブ化します（セキュリティ → セキュリティ エンジニア）
-- [ ] 複雑なタスクはマルチエージェント調整（3 つ以上のエージェント）をトリガーします
-- [ ] エージェントの専門知識がタスク要件に一致している（API → バックエンドアーキテクト）
-- [ ] 適切な場合に品質エージェントが自動的に含められます（セキュリティ、パフォーマンス、テスト）
-- [ ] 回答はドメインの専門知識と専門知識を示す
+エージェントの修正を適用した後、以下でテストします：
+- [ ] ドメイン固有のリクエストが正しいエージェントを起動する (security → security-engineer)
+- [ ] 複雑なタスクがマルチエージェント連携をトリガーする (3+エージェント)
+- [ ] エージェントの専門知識がタスク要件に一致する (API → backend-architect)
+- [ ] 品質エージェントが適切な場合に自動的に含まれる (セキュリティ, パフォーマンス, テスト)
+- [ ] 応答がドメインの専門知識と専門的な知識を示している
 
 ## クイックトラブルシューティング（レガシー）
+- **エージェントが起動しない** → ドメインキーワードを使用: "security", "performance", "frontend"
+- **間違ったエージェント** → エージェントのドキュメントでトリガーキーワードを確認
+- **エージェントが多すぎる** → 主要なドメインにキーワードを集中させる
+- **エージェントが連携しない** → タスクの複雑度を上げるか、複数ドメインのキーワードを使用する
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quick-troubleshooting-legacy)
+**エージェントが起動しない？**
+1. **キーワードを確認**: ドメイン固有の用語を使用する (例: security-engineerには "login" ではなく "authentication")
+2. **コンテキストを追加**: ファイルタイプ、フレームワーク、または特定の技術を含める
+3. **複雑度を上げる**: 複数ドメインの問題はより多くのエージェントをトリガーする
+4. **例を使用**: エージェントの専門知識に一致する具体的なシナリオを参照する
 
-- **エージェントが有効化されていない場合**→ ドメインキーワード「セキュリティ」、「パフォーマンス」、「フロントエンド」を使用します
-- **エージェントが間違っている**→ エージェントのドキュメントでトリガーキーワードを確認してください
-- **エージェントが多すぎる**→ 主要ドメインのキーワードに焦点を絞る
-- **エージェントが連携していない**→ タスクの複雑さを増やすか、マルチドメインキーワードを使用する
-
-**エージェントがアクティブ化されない?**
-
-1. **キーワードを確認する**: ドメイン固有の用語を使用する (例: セキュリティ エンジニアの場合は「ログイン」ではなく「認証」)
-2. **コンテキストを追加**: ファイルの種類、フレームワーク、または特定のテクノロジーを含める
-3. **複雑さの増大**：マルチドメインの問題はより多くのエージェントをトリガーします
-4. **使用例**: エージェントの専門知識に合った具体的なシナリオを参照する
-
-**エージェントが多すぎますか?**
-
+**エージェントが多すぎる？**
 - 主要なドメインのニーズにキーワードを集中させる
-- `/sc:focus [domain]`範囲を制限するために使用する
-- 特定のエージェントから始めて、必要に応じて拡張します
+- スコープを制限するために `/sc:focus [domain]` を使用する
+- 特定のエージェントから始め、必要に応じて拡張する
 
-**エージェントが間違っていますか?**
-
+**間違ったエージェント？**
 - エージェントのドキュメントでトリガーキーワードを確認する
 - 対象ドメインに対してより具体的な用語を使用する
-- 明示的な要件または制約を追加する
+- 明示的な要求や制約を追加する
 
 ## クイックリファレンス 📋
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quick-reference-)
-
 ### エージェントトリガー検索
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#agent-trigger-lookup)
-
-|トリガータイプ|キーワード/パターン|活性化エージェント|
+| トリガータイプ | キーワード/パターン | 起動するエージェント |
 |---|---|---|
-|**安全**|「認証」、「セキュリティ」、「脆弱性」、「暗号化」|セキュリティエンジニア|
-|**パフォーマンス**|「遅い」、「最適化」、「ボトルネック」、「レイテンシー」|パフォーマンスエンジニア|
-|**フロントエンド**|「UI」、「React」、「Vue」、「コンポーネント」、「レスポンシブ」|フロントエンドアーキテクト|
-|**バックエンド**|「API」、「サーバー」、「データベース」、「REST」、「GraphQL」|バックエンドアーキテクト|
-|**テスト**|「テスト」、「QA」、「検証」、「カバレッジ」|品質エンジニア|
-|**デブオプス**|「デプロイ」、「CI/CD」、「Docker」、「Kubernetes」|DevOpsアーキテクト|
-|**建築**|「アーキテクチャ」、「マイクロサービス」、「スケーラビリティ」|システムアーキテクト|
-|**パイソン**|「.py」、「Django」、「FastAPI」、「asyncio」|Pythonエキスパート|
-|**問題**|「バグ」、「問題」、「デバッグ」、「トラブルシューティング」|根本原因分析者|
-|**コード品質**|「リファクタリング」、「クリーンコード」、「技術的負債」|リファクタリングの専門家|
-|**ドキュメント**|「ドキュメント」、「Readme」、「APIドキュメント」|テクニカルライター|
-|**学ぶ**|「説明する」、「チュートリアル」、「初心者」、「教える」|学習ガイド|
-|**要件**|「要件」、「PRD」、「仕様」|要件アナリスト|
+| **セキュリティ** | "auth", "security", "vulnerability", "encryption" | security-engineer |
+| **パフォーマンス** | "slow", "optimization", "bottleneck", "latency" | performance-engineer |
+| **フロントエンド** | "UI", "React", "Vue", "component", "responsive" | frontend-architect |
+| **バックエンド** | "API", "server", "database", "REST", "GraphQL" | backend-architect |
+| **テスト** | "test", "QA", "validation", "coverage" | quality-engineer |
+| **DevOps** | "deploy", "CI/CD", "Docker", "Kubernetes" | devops-architect |
+| **アーキテクチャ** | "architecture", "microservices", "scalability" | system-architect |
+| **Python** | ".py", "Django", "FastAPI", "asyncio" | python-expert |
+| **問題** | "bug", "issue", "debugging", "troubleshoot" | root-cause-analyst |
+| **コード品質** | "refactor", "clean code", "technical debt" | refactoring-expert |
+| **ドキュメンテーション** | "documentation", "readme", "API docs" | technical-writer |
+| **学習** | "explain", "tutorial", "beginner", "teaching" | learning-guide |
+| **要求** | "requirements", "PRD", "specification" | requirements-analyst |
 
-### コマンドエージェントマッピング
+### コマンド-エージェントマッピング
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#command-agent-mapping)
-
-|指示|主な薬剤|サポートエージェント|
+| コマンド | 主要エージェント | サポートエージェント |
 |---|---|---|
-|`/sc:implement`|ドメインアーキテクト（フロントエンド、バックエンド）|セキュリティエンジニア、品質エンジニア|
-|`/sc:analyze`|品質エンジニア、セキュリティエンジニア|パフォーマンスエンジニア、根本原因アナリスト|
-|`/sc:troubleshoot`|根本原因分析者|ドメインスペシャリスト、パフォーマンスエンジニア|
-|`/sc:improve`|リファクタリングの専門家|品質エンジニア、パフォーマンスエンジニア|
-|`/sc:document`|テクニカルライター|ドメインスペシャリスト、学習ガイド|
-|`/sc:design`|システムアーキテクト|ドメインアーキテクト、要件アナリスト|
-|`/sc:test`|品質エンジニア|セキュリティエンジニア、パフォーマンスエンジニア|
-|`/sc:explain`|学習ガイド|テクニカルライター、ドメインスペシャリスト|
+| `/sc:implement` | ドメインアーキテクト (フロントエンド, バックエンド) | security-engineer, quality-engineer |
+| `/sc:analyze` | quality-engineer, security-engineer | performance-engineer, root-cause-analyst |
+| `/sc:troubleshoot` | root-cause-analyst | ドメイン専門家, performance-engineer |
+| `/sc:improve` | refactoring-expert | quality-engineer, performance-engineer |
+| `/sc:document` | technical-writer | ドメイン専門家, learning-guide |
+| `/sc:design` | system-architect | ドメインアーキテクト, requirements-analyst |
+| `/sc:test` | quality-engineer | security-engineer, performance-engineer |
+| `/sc:explain` | learning-guide | technical-writer, ドメイン専門家 |
 
-### 効果的な薬剤の組み合わせ
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#effective-agent-combinations)
+### 効果的なエージェントの組み合わせ
 
 **開発ワークフロー**:
-
-- Web アプリケーション: フロントエンド アーキテクト + バックエンド アーキテクト + セキュリティ エンジニア + 品質エンジニア + DevOps アーキテクト
-- API開発: バックエンドアーキテクト + セキュリティエンジニア + テクニカルライター + 品質エンジニア
-- データ プラットフォーム: Python エキスパート + パフォーマンス エンジニア + セキュリティ エンジニア + システム アーキテクト
+- Webアプリケーション: frontend-architect + backend-architect + security-engineer + quality-engineer + devops-architect
+- API開発: backend-architect + security-engineer + technical-writer + quality-engineer
+- データプラットフォーム: python-expert + performance-engineer + security-engineer + system-architect
 
 **分析ワークフロー**:
-
-- セキュリティ監査: セキュリティエンジニア + 品質エンジニア + 根本原因アナリスト + テクニカルライター
-- パフォーマンス調査: パフォーマンスエンジニア + 根本原因アナリスト + システムアーキテクト + DevOps アーキテクト
-- レガシー評価: リファクタリング専門家 + システムアーキテクト + 品質エンジニア + セキュリティエンジニア + テクニカルライター
+- セキュリティ監査: security-engineer + quality-engineer + root-cause-analyst + technical-writer
+- パフォーマンス調査: performance-engineer + root-cause-analyst + system-architect + devops-architect
+- レガシー評価: refactoring-expert + system-architect + quality-engineer + security-engineer + technical-writer
 
 **コミュニケーションワークフロー**:
+- 技術文書: technical-writer + requirements-analyst + ドメイン専門家 + learning-guide
+- 教育コンテンツ: learning-guide + technical-writer + frontend-architect + quality-engineer
 
-- 技術ドキュメント: テクニカルライター + 要件アナリスト + ドメインエキスパート + 学習ガイド
-- 教育コンテンツ: 学習ガイド + テクニカルライター + フロントエンドアーキテクト + 品質エンジニア
+## ベストプラクティス 💡
 
-## ベストプラクティス💡
+### はじめての方へ (シンプルなアプローチ)
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#best-practices-)
+**まずは自然言語で:**
+1. **目標を説明する**: ドメイン固有のキーワードを含む自然言語を使用する
+2. **自動起動を信頼する**: システムが適切なエージェントに自動的にルーティングさせる
+3. **パターンから学ぶ**: どのエージェントがどのリクエストタイプで起動するかを観察する
+4. **反復と改善**: より専門的なエージェントを呼び出すために具体性を追加する
 
-### はじめに（シンプルなアプローチ）
+### エージェント選択の最適化
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#getting-started-simple-approach)
+**効果的なキーワードの使用:**
+- **具体的 > 一般的**: security-engineerには「login」ではなく「authentication」を使用する
+- **技術用語**: フレームワーク名、技術、特定の課題を含める
+- **コンテキストの手がかり**: ファイルタイプ、プロジェクトのスコープ、複雑さの指標に言及する
+- **品質キーワード**: 包括的なカバレッジのために「security」、「performance」、「accessibility」を追加する
 
-**自然言語ファースト:**
-
-1. **目標を記述する**: ドメイン固有のキーワードを含む自然言語を使用する
-2. **信頼の自動アクティベーション**: システムが適切なエージェントに自動的にルーティングできるようにします
-3. **パターンから学ぶ**: さまざまなリクエストタイプに対してどのエージェントがアクティブになるかを観察する
-4. **反復と改良**: 専門エージェントを追加するために詳細度を追加します
-
-### エージェントの選択の最適化
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#optimizing-agent-selection)
-
-**効果的なキーワードの使用法:**
-
-- **特定 > 汎用**: セキュリティエンジニアの場合は「ログイン」の代わりに「認証」を使用します
-- **技術用語**: フレームワーク名、テクノロジー、具体的な課題など
-- **コンテキストヒント**: ファイルの種類、プロジェクトの範囲、複雑さの指標について言及する
-- **品質キーワード**: 包括的なカバレッジのために「セキュリティ」、「パフォーマンス」、「アクセシビリティ」を追加します
-
-**リクエストの最適化の例:**
-
-```shell
-# Generic (limited agent activation)
+**リクエストの最適化例:**
+```bash
+# 一般的 (限定的なエージェント起動)
 "Fix the login feature"
 
-# Optimized (multi-agent coordination)  
+# 最適化済み (マルチエージェント連携)
 "Implement secure JWT authentication with rate limiting and accessibility compliance"
-# → Triggers: security-engineer + backend-architect + frontend-architect + quality-engineer
+# → トリガー: security-engineer + backend-architect + frontend-architect + quality-engineer
 ```
 
 ### 一般的な使用パターン
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#common-usage-patterns)
-
 **開発ワークフロー:**
-
-```shell
-# Full-stack feature development
+```bash
+# フルスタック機能開発
 /sc:implement "responsive user dashboard with real-time notifications"
 # → frontend-architect + backend-architect + performance-engineer
 
-# API development with documentation
-/sc:create "REST API for payment processing with comprehensive docs"  
+# ドキュメント付きAPI開発
+/sc:create "REST API for payment processing with comprehensive docs"
 # → backend-architect + security-engineer + technical-writer + quality-engineer
 
-# Performance optimization investigation
+# パフォーマンス最適化調査
 /sc:troubleshoot "slow database queries affecting user experience"
 # → performance-engineer + root-cause-analyst + backend-architect
 ```
 
 **分析ワークフロー:**
-
-```shell
-# Security assessment
+```bash
+# セキュリティ評価
 /sc:analyze "authentication system for GDPR compliance vulnerabilities"
 # → security-engineer + quality-engineer + requirements-analyst
 
-# Code quality review  
+# コード品質レビュー
 /sc:review "legacy codebase for modernization opportunities"
 # → refactoring-expert + system-architect + quality-engineer + technical-writer
 
-# Learning and explanation
+# 学習と説明
 /sc:explain "microservices patterns with hands-on examples"
 # → system-architect + learning-guide + technical-writer
 ```
 
-### 高度なエージェント調整
+### 高度なエージェント連携
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#advanced-agent-coordination)
+**複数ドメインのプロジェクト:**
+- **広く始める**: システムレベルのキーワードで始めてアーキテクチャエージェントを呼び出す
+- **具体性を追加**: ドメイン固有のニーズを含めて専門エージェントを起動する
+- **品質統合**: セキュリティ、パフォーマンス、テストの観点を自動的に含める
+- **ドキュメントの包含**: 包括的なカバレッジのために学習やドキュメントのニーズを追加する
 
-**マルチドメインプロジェクト:**
+**エージェント選択のトラブルシューティング:**
 
-- **幅広く始める**：システムレベルのキーワードから始めて、建築エージェントの関心を引く
-- **特異性の追加**: 専門エージェントを活性化するためにドメイン固有のニーズを含める
-- **品質統合**: セキュリティ、パフォーマンス、テストの観点を自動的に含めます
-- **ドキュメントの包含**: 包括的なカバレッジのために学習またはドキュメントのニーズを追加します
-
-**エージェントの選択に関するトラブルシューティング:**
-
-**問題: 間違ったエージェントがアクティブ化される**
-
+**問題: 間違ったエージェントが起動する**
 - 解決策: より具体的なドメイン用語を使用する
-- 例:「データベース最適化」→ パフォーマンスエンジニア + バックエンドアーキテクト
+- 例: "database optimization" → performance-engineer + backend-architect
 
-**問題: エージェントが足りない**
-
-- 解決策: 複雑性指標とクロスドメインキーワードを増やす
-- 例: リクエストに「セキュリティ」、「パフォーマンス」、「ドキュメント」を追加する
+**問題: エージェントが少なすぎる**
+- 解決策: 複雑さの指標と複数ドメインのキーワードを増やす
+- 例: リクエストに "security", "performance", "documentation" を追加する
 
 **問題: エージェントが多すぎる**
+- 解決策: 主要なドメインに特定の技術用語で焦点を合わせる
+- 例: スコープを制限するために "/sc:focus backend" を使用する
 
-- 解決策: 特定の技術用語を含む主要ドメインに焦点を当てる
-- 例: スコープを制限するには「/sc:focus backend」を使用します
+### 品質駆動開発
 
-### 品質重視の開発
+**セキュリティ第一のアプローチ:**
+開発リクエストには常にセキュリティに関する考慮事項を含め、ドメイン専門家と共にセキュリティエンジニアを自動的に呼び出します。
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#quality-driven-development)
+**パフォーマンス統合:**
+パフォーマンス関連のキーワード（「fast」、「efficient」、「scalable」）を含め、最初からパフォーマンスエンジニアの連携を確保します。
 
-**セキュリティ第一のアプローチ:** 開発リクエストには常にセキュリティに関する考慮事項を含め、ドメインスペシャリストとともにセキュリティエンジニアを自動的に関与させます。
+**アクセシビリティ準拠:**
+「accessible」、「WCAG」、「inclusive」を使用して、フロントエンド開発にアクセシビリティ検証を自動的に含めます。
 
-**パフォーマンス統合:** パフォーマンス キーワード (「高速」、「効率的」、「スケーラブル」) を含めて、最初からパフォーマンス エンジニアの調整を確実にします。
-
-**アクセシビリティ コンプライアンス:** 「accessible」、「WCAG」、または「inclusive」を使用して、フロントエンド開発にアクセシビリティ検証を自動的に含めます。
-
-**ドキュメント文化:** テクニカルライターの自動的な参加と知識の移転のリクエストに「ドキュメント化」、「説明」、または「チュートリアル」を追加します。
+**ドキュメンテーション文化:**
+リクエストに「documented」、「explained」、「tutorial」を追加して、テクニカルライターの自動的な参加と知識移転を促します。
 
 ---
 
-## エージェントインテリジェンスを理解する🧠
+## エージェントの知能を理解する 🧠
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#understanding-agent-intelligence-)
+### エージェントが効果的である理由
 
-### エージェントを効果的にする要素
+**ドメイン専門知識**: 各エージェントは、そのドメインに特化した専門知識パターン、振る舞いアプローチ、問題解決手法を持っています。
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#what-makes-agents-effective)
+**コンテキストによる起動**: エージェントはキーワードだけでなく、リクエストのコンテキストを分析して関連性とエンゲージメントレベルを判断します。
 
-**ドメイン専門知識**: 各エージェントは、それぞれのドメインに特有の専門的な知識パターン、行動アプローチ、問題解決方法論を備えています。
+**協調的知能**: マルチエージェントの連携は、個々のエージェントの能力を超える相乗効果を生み出します。
 
-**コンテキスト アクティベーション**: エージェントは、キーワードだけでなくリクエストのコンテキストを分析して、関連性とエンゲージメント レベルを判断します。
+**適応学習**: エージェントの選択は、リクエストパターンと成功した連携結果に基づいて改善されます。
 
-**協調的インテリジェンス**: 複数のエージェントの調整により、個々のエージェントの能力を超える相乗的な結果が生まれます。
+### エージェント vs 従来のAI
 
-**適応学習**: リクエストパターンと成功した調整結果に基づいてエージェントの選択が改善されます。
+**従来のアプローチ**: 単一のAIが、さまざまな専門知識レベルですべてのドメインを処理する
+**エージェントアプローチ**: 専門家が深いドメイン知識と集中的な問題解決で協力する
 
-### エージェント vs. 従来のAI
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#agent-vs-traditional-ai)
-
-**従来のアプローチ**: 単一のAIが、さまざまなレベルの専門知識を持つすべてのドメインを処理します。 **エージェントアプローチ**: 専門のエキスパートが、深いドメイン知識と集中的な問題解決で協力します。
-
-**利点**：
-
-- ドメイン固有のタスクにおける高い精度
-- より洗練された問題解決方法論
-- 専門家によるレビューによる品質保証の向上
-- 協調的な多角的分析
+**利点**:
+- ドメイン固有のタスクにおけるより高い精度
+- より洗練された問題解決手法
+- 専門家によるレビューによるより良い品質保証
+- 調整された多角的な分析
 
 ### システムを信頼し、パターンを理解する
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#trust-the-system-understand-the-patterns)
-
-**期待すること**:
-
+**期待されること**:
 - 適切なドメイン専門家への自動ルーティング
-- 複雑なタスクのためのマルチエージェント調整
-- 自動QAエージェントの組み込みによる品質統合
-- 教育エージェントの活性化による学習機会
+- 複雑なタスクのためのマルチエージェント連携
+- 自動QAエージェントの参加による品質統合
+- 教育エージェントの起動による学習機会
 
-**心配する必要がないこと**：
-
-- エージェントの手動選択または構成
+**心配する必要がないこと**:
+- 手動でのエージェント選択や設定
 - 複雑なルーティングルールやエージェント管理
-- エージェントの構成または調整
-- エージェントとのやり取りを細かく管理する
+- エージェントの設定や連携
+- エージェントの相互作用のマイクロマネジメント
 
 ---
 
 ## 関連リソース 📚
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#related-resources-)
-
 ### 必須ドキュメント
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#essential-documentation)
-
-- **[コマンドガイド](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/commands.md)**- 最適なエージェント調整をトリガーするSuperClaudeコマンドをマスターする
-- **[MCP サーバー](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/mcp-servers.md)**- 専用ツールの統合によるエージェント機能の強化
-- **[セッション管理](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/session-management.md)**- 永続的なエージェントコンテキストによる長期ワークフロー
+- **[コマンドガイド](commands.md)** - 最適なエージェント連携をトリガーするSuperClaudeコマンドをマスターする
+- **[MCPサーバー](mcp-servers.md)** - 専門ツール統合によるエージェント能力の強化
+- **[セッション管理](session-management.md)** - 永続的なエージェントコンテキストを持つ長期ワークフロー
 
 ### 高度な使用法
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#advanced-usage)
-
-- **[行動モード](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/modes.md)**- エージェントの調整を強化するためのコンテキスト最適化
-- **[はじめに](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Getting-Started/quick-start.md)**- エージェントの最適化のための専門家のテクニック
-- **[例のクックブック](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Reference/examples-cookbook.md)**- 現実世界のエージェントの調整パターン
+- **[振る舞いモード](modes.md)** - 強化されたエージェント連携のためのコンテキスト最適化
+- **[はじめに](../Getting-Started-jp/quick-start.md)** - エージェント最適化のための専門技術
+- **[事例クックブック](../Reference-jp/examples-cookbook.md)** - 現実世界のエージェント連携パターン
 
 ### 開発リソース
-
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#development-resources)
-
-- **[技術アーキテクチャ](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Developer-Guide/technical-architecture.md)**- SuperClaude のエージェント システム設計を理解する
-- **[貢献](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/Developer-Guide/contributing-code.md)**- エージェントの機能と調整パターンの拡張
+- **[技術アーキテクチャ](../Developer-Guide-jp/technical-architecture.md)** - SuperClaudeのエージェントシステム設計を理解する
+- **[貢献](../Developer-Guide-jp/contributing-code.md)** - エージェント能力と連携パターンの拡張
 
 ---
 
-## エージェントとしての道のり 🚀
+## あなたのエージェントとしての旅 🚀
 
-[](https://github.com/khayashi4337/SuperClaude_Framework/blob/master/Docs/User-Guide/agents.md#your-agent-journey-)
+**1週目: 自然な使用**
+自然言語での説明から始めます。どのエージェントがなぜ起動するのかに気づきましょう。プロセスを考えすぎずに、キーワードパターンの直感を養います。
 
-**第1週：自然な使用法** 自然な言語による説明から始めましょう。どのエージェントが、そしてなぜアクティブになるのかに注目しましょう。プロセスを考えすぎずに、キーワードのパターンに対する直感を養います。
+**2-3週目: パターン認識**
+エージェントの連携パターンを観察します。複雑さとドメインキーワードがエージェント選択にどのように影響するかを理解します。より良い連携のためにリクエストの表現を最適化し始めます。
 
-**第2～3週：パターン認識**  
-エージェントの連携パターンを観察します。複雑さとドメインキーワードがエージェントの選択にどのような影響を与えるかを理解します。連携を向上させるために、リクエストの表現を最適化します。
+**2ヶ月目以降: エキスパート連携**
+最適なエージェントの組み合わせをトリガーする複数ドメインのリクエストをマスターします。効果的なエージェント選択のためにトラブルシューティング技術を活用します。複雑なワークフローのために高度なパターンを使用します。
 
-**2ヶ月目以降：エキスパートコーディネーション** 最適なエージェントの組み合わせをトリガーするマルチドメインリクエストをマスターします。トラブルシューティング手法を活用して効果的なエージェント選定を行います。複雑なワークフローには高度なパターンを使用します。
+**SuperClaudeの利点:**
+14人の専門AIエキスパートが連携して応答する力を、シンプルで自然な言語のリクエストを通じて体験してください。設定も管理も不要で、あなたのニーズに合わせてスケールするインテリジェントなコラボレーションです。
 
-**SuperClaudeのメリット：** 14名の専門AIエキスパートが、シンプルな自然言語によるリクエストに連携して対応します。設定や管理は不要で、ニーズに合わせて拡張できるインテリジェントな連携を実現します。
-
-🎯**インテリジェントエージェントコーディネーションを体験する準備はできましたか？まずは`/sc:implement`、専門的な AI コラボレーションの魔法を発見してください。**
+🎯 **インテリジェントなエージェント連携を体験する準備はできましたか？ `/sc:implement` から始めて、専門的なAIコラボレーションの魔法を発見してください。**

@@ -24,26 +24,26 @@ from . import OperationBase
 
 
 class InstallOperation(OperationBase):
-    """Installation operation implementation"""
+    """インストール操作の実装"""
     
     def __init__(self):
         super().__init__("install")
 
 
 def register_parser(subparsers, global_parser=None) -> argparse.ArgumentParser:
-    """Register installation CLI arguments"""
+    """インストールCLI引数を登録します"""
     parents = [global_parser] if global_parser else []
     
     parser = subparsers.add_parser(
         "install",
-        help="Install SuperClaude framework components",
-        description="Install SuperClaude Framework with various options and profiles",
+        help="SuperClaudeフレームワークコンポーネントをインストールします",
+        description="様々なオプションとプロファイルでSuperClaudeフレームワークをインストールします",
         epilog="""
-Examples:
-  SuperClaude install                          # Interactive installation
-  SuperClaude install --dry-run                # Dry-run mode  
-  SuperClaude install --components core mcp    # Specific components
-  SuperClaude install --verbose --force        # Verbose with force mode
+例:
+  SuperClaude install                          # 対話的なインストール
+  SuperClaude install --dry-run                # ドライランモード
+  SuperClaude install --components core mcp    # 特定のコンポーネント
+  SuperClaude install --verbose --force        # 詳細モードと強制モード
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=parents
@@ -55,36 +55,36 @@ Examples:
         "--components",
         type=str,
         nargs="+",
-        help="Specific components to install"
+        help="インストールする特定のコンポーネント"
     )
     
     # Installation options
     parser.add_argument(
         "--no-backup",
         action="store_true",
-        help="Skip backup creation"
+        help="バックアップの作成をスキップします"
     )
     
     parser.add_argument(
         "--list-components",
         action="store_true",
-        help="List available components and exit"
+        help="利用可能なコンポーネントを一覧表示して終了します"
     )
     
     parser.add_argument(
         "--diagnose",
         action="store_true",
-        help="Run system diagnostics and show installation help"
+        help="システム診断を実行し、インストールヘルプを表示します"
     )
     
     return parser
 
 
 def validate_system_requirements(validator: Validator, component_names: List[str]) -> bool:
-    """Validate system requirements"""
+    """システム要件を検証します"""
     logger = get_logger()
     
-    logger.info("Validating system requirements...")
+    logger.info("システム要件を検証中...")
     
     try:
         # Load requirements configuration
@@ -95,27 +95,27 @@ def validate_system_requirements(validator: Validator, component_names: List[str
         success, errors = validator.validate_component_requirements(component_names, requirements)
         
         if success:
-            logger.success("All system requirements met")
+            logger.success("すべてのシステム要件が満たされています")
             return True
         else:
-            logger.error("System requirements not met:")
+            logger.error("システム要件が満たされていません:")
             for error in errors:
                 logger.error(f"  - {error}")
             
             # Provide additional guidance
-            print(f"\n{Colors.CYAN}💡 Installation Help:{Colors.RESET}")
-            print("  Run 'SuperClaude install --diagnose' for detailed system diagnostics")
-            print("  and step-by-step installation instructions.")
+            print(f"\n{Colors.CYAN}💡 インストールヘルプ:{Colors.RESET}")
+            print("  詳細なシステム診断については 'SuperClaude install --diagnose' を実行してください")
+            print("  そして、ステップバイステップのインストール手順を参照してください。")
             
             return False
             
     except Exception as e:
-        logger.error(f"Could not validate system requirements: {e}")
+        logger.error(f"システム要件を検証できませんでした: {e}")
         return False
 
 
 def get_components_to_install(args: argparse.Namespace, registry: ComponentRegistry, config_manager: ConfigService) -> Optional[List[str]]:
-    """Determine which components to install"""
+    """インストールするコンポーネントを決定します"""
     logger = get_logger()
     
     # Explicit components specified
@@ -130,14 +130,14 @@ def get_components_to_install(args: argparse.Namespace, registry: ComponentRegis
 
 def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> Dict[str, str]:
     """
-    Collect API keys for servers that require them
+    サーバーが必要とするAPIキーを収集します
     
     Args:
-        selected_servers: List of selected server keys
-        mcp_instance: MCP component instance
+        selected_servers: 選択されたサーバーキーのリスト
+        mcp_instance: MCPコンポーネントインスタンス
         
     Returns:
-        Dictionary of environment variable names to API key values
+        環境変数名とAPIキー値の辞書
     """
     # Filter servers needing keys
     servers_needing_keys = [
@@ -151,8 +151,8 @@ def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> D
         return {}
     
     # Display API key configuration header
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══ API Key Configuration ═══{Colors.RESET}")
-    print(f"{Colors.YELLOW}The following servers require API keys for full functionality:{Colors.RESET}\n")
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══ APIキー設定 ═══{Colors.RESET}")
+    print(f"{Colors.YELLOW}以下のサーバーは全機能を利用するためにAPIキーが必要です:{Colors.RESET}\n")
     
     collected_keys = {}
     for server_key, server_info in servers_needing_keys:
@@ -168,14 +168,14 @@ def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> D
 
 
 def select_mcp_servers(registry: ComponentRegistry) -> List[str]:
-    """Stage 1: MCP Server Selection with API Key Collection"""
+    """ステージ1: MCPサーバーの選択とAPIキーの収集"""
     logger = get_logger()
     
     try:
         # Get MCP component to access server list
         mcp_instance = registry.get_component_instance("mcp", Path.home() / ".claude")
         if not mcp_instance or not hasattr(mcp_instance, 'mcp_servers'):
-            logger.error("Could not access MCP server information")
+            logger.error("MCPサーバー情報にアクセスできませんでした")
             return []
         
         # Create MCP server menu
@@ -184,23 +184,23 @@ def select_mcp_servers(registry: ComponentRegistry) -> List[str]:
         
         for server_key, server_info in mcp_servers.items():
             description = server_info["description"]
-            api_key_note = " (requires API key)" if server_info.get("requires_api_key", False) else ""
+            api_key_note = " (APIキーが必要です)" if server_info.get("requires_api_key", False) else ""
             server_options.append(f"{server_key} - {description}{api_key_note}")
         
         print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══════════════════════════════════════════════════{Colors.RESET}")
-        print(f"{Colors.CYAN}{Colors.BRIGHT}Stage 1: MCP Server Selection (Optional){Colors.RESET}")
+        print(f"{Colors.CYAN}{Colors.BRIGHT}ステージ1: MCPサーバーの選択（任意）{Colors.RESET}")
         print(f"{Colors.CYAN}{Colors.BRIGHT}═══════════════════════════════════════════════════{Colors.RESET}")
-        print(f"\n{Colors.BLUE}MCP servers extend Claude Code with specialized capabilities.{Colors.RESET}")
-        print(f"{Colors.BLUE}Select servers to configure (you can always add more later):{Colors.RESET}")
+        print(f"\n{Colors.BLUE}MCPサーバーは、専門的な機能でClaude Codeを拡張します。{Colors.RESET}")
+        print(f"{Colors.BLUE}設定するサーバーを選択してください（後でいつでも追加できます）:{Colors.RESET}")
         
         # Add option to skip MCP
-        server_options.append("Skip MCP Server installation")
+        server_options.append("MCPサーバーのインストールをスキップ")
         
-        menu = Menu("Select MCP servers to configure:", server_options, multi_select=True)
+        menu = Menu("設定するMCPサーバーを選択してください:", server_options, multi_select=True)
         selections = menu.display()
         
         if not selections:
-            logger.info("No MCP servers selected")
+            logger.info("MCPサーバーが選択されていません")
             return []
         
         # Filter out the "skip" option and return server keys
@@ -212,7 +212,7 @@ def select_mcp_servers(registry: ComponentRegistry) -> List[str]:
                 selected_servers.append(server_keys[i])
         
         if selected_servers:
-            logger.info(f"Selected MCP servers: {', '.join(selected_servers)}")
+            logger.info(f"選択されたMCPサーバー: {', '.join(selected_servers)}")
             
             # NEW: Collect API keys for selected servers
             collected_keys = collect_api_keys_for_servers(selected_servers, mcp_instance)
@@ -224,17 +224,17 @@ def select_mcp_servers(registry: ComponentRegistry) -> List[str]:
                 # Store keys for MCP component to use during installation
                 mcp_instance.collected_api_keys = collected_keys
         else:
-            logger.info("No MCP servers selected")
+            logger.info("MCPサーバーが選択されていません")
         
         return selected_servers
         
     except Exception as e:
-        logger.error(f"Error in MCP server selection: {e}")
+        logger.error(f"MCPサーバーの選択中にエラーが発生しました: {e}")
         return []
 
 
 def select_framework_components(registry: ComponentRegistry, config_manager: ConfigService, selected_mcp_servers: List[str]) -> List[str]:
-    """Stage 2: Framework Component Selection"""
+    """ステージ2: フレームワークコンポーネントの選択"""
     logger = get_logger()
     
     try:
@@ -248,30 +248,30 @@ def select_framework_components(registry: ComponentRegistry, config_manager: Con
         for component_name in framework_components:
             metadata = registry.get_component_metadata(component_name)
             if metadata:
-                description = metadata.get("description", "No description")
+                description = metadata.get("description", "説明なし")
                 component_options.append(f"{component_name} - {description}")
                 component_info[component_name] = metadata
         
         # Add MCP documentation option
         if selected_mcp_servers:
-            mcp_docs_desc = f"MCP documentation for {', '.join(selected_mcp_servers)} (auto-selected)"
+            mcp_docs_desc = f"{', '.join(selected_mcp_servers)} のMCPドキュメント (自動選択)"
             component_options.append(f"mcp_docs - {mcp_docs_desc}")
             auto_selected_mcp_docs = True
         else:
-            component_options.append("mcp_docs - MCP server documentation (none selected)")
+            component_options.append("mcp_docs - MCPサーバードキュメント (選択されていません)")
             auto_selected_mcp_docs = False
         
         print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══════════════════════════════════════════════════{Colors.RESET}")
-        print(f"{Colors.CYAN}{Colors.BRIGHT}Stage 2: Framework Component Selection{Colors.RESET}")
+        print(f"{Colors.CYAN}{Colors.BRIGHT}ステージ2: フレームワークコンポーネントの選択{Colors.RESET}")
         print(f"{Colors.CYAN}{Colors.BRIGHT}═══════════════════════════════════════════════════{Colors.RESET}")
-        print(f"\n{Colors.BLUE}Select SuperClaude framework components to install:{Colors.RESET}")
+        print(f"\n{Colors.BLUE}インストールするSuperClaudeフレームワークコンポーネントを選択してください:{Colors.RESET}")
         
-        menu = Menu("Select components (Core is recommended):", component_options, multi_select=True)
+        menu = Menu("コンポーネントを選択してください (Coreを推奨):", component_options, multi_select=True)
         selections = menu.display()
         
         if not selections:
             # Default to core if nothing selected
-            logger.info("No components selected, defaulting to core")
+            logger.info("コンポーネントが選択されていないため、coreをデフォルトにします")
             selected_components = ["core"]
         else:
             selected_components = []
@@ -288,27 +288,27 @@ def select_framework_components(registry: ComponentRegistry, config_manager: Con
             if mcp_docs_index not in selections:
                 # User didn't select it, but we auto-select it
                 selected_components.append("mcp_docs")
-                logger.info("Auto-selected MCP documentation for configured servers")
+                logger.info("設定されたサーバーのMCPドキュメントが自動選択されました")
         
         # Always include MCP component if servers were selected
         if selected_mcp_servers and "mcp" not in selected_components:
             selected_components.append("mcp")
         
-        logger.info(f"Selected framework components: {', '.join(selected_components)}")
+        logger.info(f"選択されたフレームワークコンポーネント: {', '.join(selected_components)}")
         return selected_components
         
     except Exception as e:
-        logger.error(f"Error in framework component selection: {e}")
+        logger.error(f"フレームワークコンポーネントの選択中にエラーが発生しました: {e}")
         return ["core"]  # Fallback to core
 
 
 def interactive_component_selection(registry: ComponentRegistry, config_manager: ConfigService) -> Optional[List[str]]:
-    """Two-stage interactive component selection"""
+    """2段階の対話型コンポーネント選択"""
     logger = get_logger()
     
     try:
-        print(f"\n{Colors.CYAN}SuperClaude Interactive Installation{Colors.RESET}")
-        print(f"{Colors.BLUE}Select components to install using the two-stage process:{Colors.RESET}")
+        print(f"\n{Colors.CYAN}SuperClaude 対話的インストール{Colors.RESET}")
+        print(f"{Colors.BLUE}2段階のプロセスでインストールするコンポーネントを選択してください:{Colors.RESET}")
         
         # Stage 1: MCP Server Selection
         selected_mcp_servers = select_mcp_servers(registry)
@@ -324,29 +324,29 @@ def interactive_component_selection(registry: ComponentRegistry, config_manager:
         return selected_components
         
     except Exception as e:
-        logger.error(f"Error in component selection: {e}")
+        logger.error(f"コンポーネントの選択中にエラーが発生しました: {e}")
         return None
 
 
 def display_installation_plan(components: List[str], registry: ComponentRegistry, install_dir: Path) -> None:
-    """Display installation plan"""
+    """インストール計画を表示します"""
     logger = get_logger()
     
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}Installation Plan{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}インストール計画{Colors.RESET}")
     print("=" * 50)
     
     # Resolve dependencies
     try:
         ordered_components = registry.resolve_dependencies(components)
         
-        print(f"{Colors.BLUE}Installation Directory:{Colors.RESET} {install_dir}")
-        print(f"{Colors.BLUE}Components to install:{Colors.RESET}")
+        print(f"{Colors.BLUE}インストールディレクトリ:{Colors.RESET} {install_dir}")
+        print(f"{Colors.BLUE}インストールするコンポーネント:{Colors.RESET}")
         
         total_size = 0
         for i, component_name in enumerate(ordered_components, 1):
             metadata = registry.get_component_metadata(component_name)
             if metadata:
-                description = metadata.get("description", "No description")
+                description = metadata.get("description", "説明がありません")
                 print(f"  {i}. {component_name} - {description}")
                 
                 # Get size estimate if component supports it
@@ -358,33 +358,33 @@ def display_installation_plan(components: List[str], registry: ComponentRegistry
                 except Exception:
                     pass
             else:
-                print(f"  {i}. {component_name} - Unknown component")
+                print(f"  {i}. {component_name} - 不明なコンポーネント")
         
         if total_size > 0:
-            print(f"\n{Colors.BLUE}Estimated size:{Colors.RESET} {format_size(total_size)}")
+            print(f"\n{Colors.BLUE}推定サイズ:{Colors.RESET} {format_size(total_size)}")
         
         print()
         
     except Exception as e:
-        logger.error(f"Could not resolve dependencies: {e}")
+        logger.error(f"依存関係を解決できませんでした: {e}")
         raise
 
 
 def run_system_diagnostics(validator: Validator) -> None:
-    """Run comprehensive system diagnostics"""
+    """包括的なシステム診断を実行します"""
     logger = get_logger()
     
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}SuperClaude System Diagnostics{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}SuperClaude システム診断{Colors.RESET}")
     print("=" * 50)
     
     # Run diagnostics
     diagnostics = validator.diagnose_system()
     
     # Display platform info
-    print(f"{Colors.BLUE}Platform:{Colors.RESET} {diagnostics['platform']}")
+    print(f"{Colors.BLUE}プラットフォーム:{Colors.RESET} {diagnostics['platform']}")
     
     # Display check results
-    print(f"\n{Colors.BLUE}System Checks:{Colors.RESET}")
+    print(f"\n{Colors.BLUE}システムチェック:{Colors.RESET}")
     all_passed = True
     
     for check_name, check_info in diagnostics['checks'].items():
@@ -399,32 +399,32 @@ def run_system_diagnostics(validator: Validator) -> None:
     
     # Display issues and recommendations
     if diagnostics['issues']:
-        print(f"\n{Colors.YELLOW}Issues Found:{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}問題が見つかりました:{Colors.RESET}")
         for issue in diagnostics['issues']:
             print(f"  ⚠️  {issue}")
         
-        print(f"\n{Colors.CYAN}Recommendations:{Colors.RESET}")
+        print(f"\n{Colors.CYAN}推奨事項:{Colors.RESET}")
         for recommendation in diagnostics['recommendations']:
             print(recommendation)
     
     # Summary
     if all_passed:
-        print(f"\n{Colors.GREEN}✅ All system checks passed! Your system is ready for SuperClaude.{Colors.RESET}")
+        print(f"\n{Colors.GREEN}✅ すべてのシステムチェックに合格しました！お使いのシステムはSuperClaudeの準備ができています。{Colors.RESET}")
     else:
-        print(f"\n{Colors.YELLOW}⚠️  Some issues found. Please address the recommendations above.{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}⚠️ いくつかの問題が見つかりました。上記の推奨事項に対処してください。{Colors.RESET}")
     
-    print(f"\n{Colors.BLUE}Next steps:{Colors.RESET}")
+    print(f"\n{Colors.BLUE}次のステップ:{Colors.RESET}")
     if all_passed:
-        print("  1. Run 'SuperClaude install' to proceed with installation")
-        print("  2. Choose your preferred installation mode (quick, minimal, or custom)")
+        print("  1. 'SuperClaude install' を実行してインストールを続行してください")
+        print("  2. お好みのインストールモード（クイック、最小、またはカスタム）を選択してください")
     else:
-        print("  1. Install missing dependencies using the commands above")
-        print("  2. Restart your terminal after installing tools")
-        print("  3. Run 'SuperClaude install --diagnose' again to verify")
+        print("  1. 上記のコマンドを使用して、不足している依存関係をインストールしてください")
+        print("  2. ツールをインストールした後、ターミナルを再起動してください")
+        print("  3. 'SuperClaude install --diagnose' を再度実行して確認してください")
 
 
 def perform_installation(components: List[str], args: argparse.Namespace, config_manager: ConfigService = None) -> bool:
-    """Perform the actual installation"""
+    """実際のインストールを実行します"""
     logger = get_logger()
     start_time = time.time()
     
@@ -440,7 +440,7 @@ def perform_installation(components: List[str], args: argparse.Namespace, config
         component_instances = registry.create_component_instances(components, args.install_dir)
         
         if not component_instances:
-            logger.error("No valid component instances created")
+            logger.error("有効なコンポーネントインスタンスが作成されませんでした")
             return False
         
         # Register components with installer
@@ -452,12 +452,12 @@ def perform_installation(components: List[str], args: argparse.Namespace, config
         # Setup progress tracking
         progress = ProgressBar(
             total=len(ordered_components),
-            prefix="Installing: ",
+            prefix="インストール中: ",
             suffix=""
         )
         
         # Install components
-        logger.info(f"Installing {len(ordered_components)} components...")
+        logger.info(f"{len(ordered_components)}個のコンポーネントをインストール中...")
         
         config = {
             "force": args.force,
@@ -471,43 +471,43 @@ def perform_installation(components: List[str], args: argparse.Namespace, config
         # Update progress
         for i, component_name in enumerate(ordered_components):
             if component_name in installer.installed_components:
-                progress.update(i + 1, f"Installed {component_name}")
+                progress.update(i + 1, f"インストール済み {component_name}")
             else:
-                progress.update(i + 1, f"Failed {component_name}")
+                progress.update(i + 1, f"失敗 {component_name}")
             time.sleep(0.1)  # Brief pause for visual effect
         
-        progress.finish("Installation complete")
+        progress.finish("インストール完了")
         
         # Show results
         duration = time.time() - start_time
         
         if success:
-            logger.success(f"Installation completed successfully in {duration:.1f} seconds")
+            logger.success(f"インストールが{duration:.1f}秒で正常に完了しました")
             
             # Show summary
             summary = installer.get_installation_summary()
             if summary['installed']:
-                logger.info(f"Installed components: {', '.join(summary['installed'])}")
+                logger.info(f"インストールされたコンポーネント: {', '.join(summary['installed'])}")
             
             if summary['backup_path']:
-                logger.info(f"Backup created: {summary['backup_path']}")
+                logger.info(f"バックアップが作成されました: {summary['backup_path']}")
                 
         else:
-            logger.error(f"Installation completed with errors in {duration:.1f} seconds")
+            logger.error(f"{duration:.1f}秒でエラーが発生してインストールが完了しました")
             
             summary = installer.get_installation_summary()
             if summary['failed']:
-                logger.error(f"Failed components: {', '.join(summary['failed'])}")
+                logger.error(f"失敗したコンポーネント: {', '.join(summary['failed'])}")
         
         return success
         
     except Exception as e:
-        logger.exception(f"Unexpected error during installation: {e}")
+        logger.exception(f"インストール中に予期しないエラーが発生しました: {e}")
         return False
 
 
 def run(args: argparse.Namespace) -> int:
-    """Execute installation operation with parsed arguments"""
+    """解析された引数でインストール操作を実行します"""
     operation = InstallOperation()
     operation.setup_operation_logging(args)
     logger = get_logger()
@@ -539,14 +539,14 @@ def run(args: argparse.Namespace) -> int:
                         # Ensure symlink target is also within user home
                         symlink_target.relative_to(expected_home)
     except ValueError:
-        print(f"\n[✗] Installation must be inside your user profile directory.")
-        print(f"    Expected prefix: {expected_home}")
-        print(f"    Provided path:   {install_dir_resolved}")
-        print(f"    Security: Symlinks outside user directory are not allowed.")
+        print(f"\n[✗] インストールはユーザープロファイルディレクトリ内で行う必要があります。")
+        print(f"    期待されるプレフィックス: {expected_home}")
+        print(f"    指定されたパス:   {install_dir_resolved}")
+        print(f"    セキュリティ: ユーザーディレクトリ外へのシンボリックリンクは許可されていません。")
         sys.exit(1)
     except Exception as e:
-        print(f"\n[✗] Security validation failed: {e}")
-        print(f"    Please use a standard directory path within your user profile.")
+        print(f"\n[✗] セキュリティ検証に失敗しました: {e}")
+        print(f"    ユーザープロファイル内の標準的なディレクトリパスを使用してください。")
         sys.exit(1)
     
     try:
@@ -561,8 +561,8 @@ def run(args: argparse.Namespace) -> int:
         if not args.quiet:
             from setup.cli.base import __version__
             display_header(
-                f"SuperClaude Installation v{__version__}",
-                "Installing SuperClaude framework components"
+                f"SuperClaude インストール v{__version__}",
+                "SuperClaudeフレームワークコンポーネントをインストール中"
             )
         
         # Handle special modes
@@ -572,17 +572,17 @@ def run(args: argparse.Namespace) -> int:
             
             components = registry.list_components()
             if components:
-                print(f"\n{Colors.CYAN}Available Components:{Colors.RESET}")
+                print(f"\n{Colors.CYAN}利用可能なコンポーネント:{Colors.RESET}")
                 for component_name in components:
                     metadata = registry.get_component_metadata(component_name)
                     if metadata:
-                        desc = metadata.get("description", "No description")
-                        category = metadata.get("category", "unknown")
+                        desc = metadata.get("description", "説明がありません")
+                        category = metadata.get("category", "不明")
                         print(f"  {component_name} ({category}) - {desc}")
                     else:
-                        print(f"  {component_name} - Unknown component")
+                        print(f"  {component_name} - 不明なコンポーネント")
             else:
-                print("No components found")
+                print("コンポーネントが見つかりません")
             return 0
         
         # Handle diagnostic mode
@@ -592,7 +592,7 @@ def run(args: argparse.Namespace) -> int:
             return 0
         
         # Create component registry and load configuration
-        logger.info("Initializing installation system...")
+        logger.info("インストールシステムを初期化中...")
         
         registry = ComponentRegistry(PROJECT_ROOT / "setup" / "components")
         registry.discover_components()
@@ -603,7 +603,7 @@ def run(args: argparse.Namespace) -> int:
         # Validate configuration
         config_errors = config_manager.validate_config_files()
         if config_errors:
-            logger.error("Configuration validation failed:")
+            logger.error("設定の検証に失敗しました:")
             for error in config_errors:
                 logger.error(f"  - {error}")
             return 1
@@ -611,23 +611,23 @@ def run(args: argparse.Namespace) -> int:
         # Get components to install
         components = get_components_to_install(args, registry, config_manager)
         if not components:
-            logger.error("No components selected for installation")
+            logger.error("インストールするコンポーネントが選択されていません")
             return 1
         
         # Validate system requirements
         if not validate_system_requirements(validator, components):
             if not args.force:
-                logger.error("System requirements not met. Use --force to override.")
+                logger.error("システム要件が満たされていません。--forceを使用して上書きしてください。")
                 return 1
             else:
-                logger.warning("System requirements not met, but continuing due to --force flag")
+                logger.warning("システム要件が満たされていませんが、--forceフラグのため続行します")
         
         # Check for existing installation
         if args.install_dir.exists() and not args.force:
             if not args.dry_run:
-                logger.warning(f"Installation directory already exists: {args.install_dir}")
-                if not args.yes and not confirm("Continue and update existing installation?", default=False):
-                    logger.info("Installation cancelled by user")
+                logger.warning(f"インストールディレクトリは既に存在します: {args.install_dir}")
+                if not args.yes and not confirm("既存のインストールを続行して更新しますか？", default=False):
+                    logger.info("ユーザーによってインストールがキャンセルされました")
                     return 0
         
         # Display installation plan
@@ -635,8 +635,8 @@ def run(args: argparse.Namespace) -> int:
             display_installation_plan(components, registry, args.install_dir)
             
             if not args.dry_run:
-                if not args.yes and not confirm("Proceed with installation?", default=True):
-                    logger.info("Installation cancelled by user")
+                if not args.yes and not confirm("インストールを続行しますか？", default=True):
+                    logger.info("ユーザーによってインストールがキャンセルされました")
                     return 0
         
         # Perform installation
@@ -644,21 +644,21 @@ def run(args: argparse.Namespace) -> int:
         
         if success:
             if not args.quiet:
-                display_success("SuperClaude installation completed successfully!")
+                display_success("SuperClaudeのインストールが正常に完了しました！")
                 
                 if not args.dry_run:
-                    print(f"\n{Colors.CYAN}Next steps:{Colors.RESET}")
-                    print(f"1. Restart your Claude Code session")
-                    print(f"2. Framework files are now available in {args.install_dir}")
-                    print(f"3. Use SuperClaude commands and features in Claude Code")
+                    print(f"\n{Colors.CYAN}次のステップ:{Colors.RESET}")
+                    print(f"1. Claude Codeセッションを再起動してください")
+                    print(f"2. フレームワークファイルが{args.install_dir}で利用可能になりました")
+                    print(f"3. Claude CodeでSuperClaudeのコマンドと機能を使用してください")
                     
             return 0
         else:
-            display_error("Installation failed. Check logs for details.")
+            display_error("インストールに失敗しました。詳細はログを確認してください。")
             return 1
             
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Installation cancelled by user{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}ユーザーによってインストールがキャンセルされました{Colors.RESET}")
         return 130
     except Exception as e:
         return operation.handle_operation_error("install", e)

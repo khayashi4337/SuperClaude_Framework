@@ -22,7 +22,7 @@ class CoreComponent(Component):
         return {
             "name": "core",
             "version": __version__,
-            "description": "SuperClaude framework documentation and core files",
+            "description": "SuperClaudeフレームワークのドキュメントとコアファイル",
             "category": "core"
         }
     
@@ -32,7 +32,7 @@ class CoreComponent(Component):
             "framework": {
                 "version": __version__,
                 "name": "SuperClaude",
-                "description": "AI-enhanced development framework for Claude Code",
+                "description": "Claude CodeのためのAI強化開発フレームワーク",
                 "installation_type": "global",
                 "components": ["core"]
             },
@@ -46,7 +46,7 @@ class CoreComponent(Component):
     
     def _install(self, config: Dict[str, Any]) -> bool:
         """Install core component"""
-        self.logger.info("Installing SuperClaude core framework files...")
+        self.logger.info("SuperClaudeコアフレームワークファイルをインストール中...")
 
         return super()._install(config);
 
@@ -55,7 +55,7 @@ class CoreComponent(Component):
         try:
             metadata_mods = self.get_metadata_modifications()
             self.settings_manager.update_metadata(metadata_mods)
-            self.logger.info("Updated metadata with framework configuration")
+            self.logger.info("メタデータをフレームワーク設定で更新しました")
             
             # Add component registration to metadata
             self.settings_manager.add_component_registration("core", {
@@ -64,13 +64,13 @@ class CoreComponent(Component):
                 "files_count": len(self.component_files)
             })
 
-            self.logger.info("Updated metadata with core component registration")
+            self.logger.info("メタデータをコアコンポーネントの登録で更新しました")
             
             # Migrate any existing SuperClaude data from settings.json
             if self.settings_manager.migrate_superclaude_data():
-                self.logger.info("Migrated existing SuperClaude data from settings.json")
+                self.logger.info("既存のSuperClaudeデータをsettings.jsonから移行しました")
         except Exception as e:
-            self.logger.error(f"Failed to update metadata: {e}")
+            self.logger.error(f"メタデータの更新に失敗しました: {e}")
             return False
 
         # Create additional directories for other components
@@ -78,15 +78,15 @@ class CoreComponent(Component):
         for dirname in additional_dirs:
             dir_path = self.install_dir / dirname
             if not self.file_manager.ensure_directory(dir_path):
-                self.logger.warning(f"Could not create directory: {dir_path}")
+                self.logger.warning(f"ディレクトリを作成できませんでした: {dir_path}")
         
         # Update CLAUDE.md with core framework imports
         try:
             manager = CLAUDEMdService(self.install_dir)
             manager.add_imports(self.component_files, category="Core Framework")
-            self.logger.info("Updated CLAUDE.md with core framework imports")
+            self.logger.info("CLAUDE.mdをコアフレームワークのインポートで更新しました")
         except Exception as e:
-            self.logger.warning(f"Failed to update CLAUDE.md with core framework imports: {e}")
+            self.logger.warning(f"CLAUDE.mdをコアフレームワークのインポートで更新できませんでした: {e}")
             # Don't fail the whole installation for this
 
         return True
@@ -95,7 +95,7 @@ class CoreComponent(Component):
     def uninstall(self) -> bool:
         """Uninstall core component"""
         try:
-            self.logger.info("Uninstalling SuperClaude core component...")
+            self.logger.info("SuperClaudeコアコンポーネントをアンインストール中...")
             
             # Remove framework files
             removed_count = 0
@@ -103,9 +103,9 @@ class CoreComponent(Component):
                 file_path = self.install_dir / filename
                 if self.file_manager.remove_file(file_path):
                     removed_count += 1
-                    self.logger.debug(f"Removed {filename}")
+                    self.logger.debug(f"削除しました {filename}")
                 else:
-                    self.logger.warning(f"Could not remove {filename}")
+                    self.logger.warning(f"{filename}を削除できませんでした")
             
             # Update metadata to remove core component
             try:
@@ -118,15 +118,15 @@ class CoreComponent(Component):
                             del metadata[key]
 
                     self.settings_manager.save_metadata(metadata)
-                    self.logger.info("Removed core component from metadata")
+                    self.logger.info("メタデータからコアコンポーネントを削除しました")
             except Exception as e:
-                self.logger.warning(f"Could not update metadata: {e}")
+                self.logger.warning(f"メタデータを更新できませんでした: {e}")
             
-            self.logger.success(f"Core component uninstalled ({removed_count} files removed)")
+            self.logger.success(f"コアコンポーネントがアンインストールされました（{removed_count}個のファイルを削除）")
             return True
             
         except Exception as e:
-            self.logger.exception(f"Unexpected error during core uninstallation: {e}")
+            self.logger.exception(f"コアのアンインストール中に予期しないエラーが発生しました: {e}")
             return False
     
     def get_dependencies(self) -> List[str]:
@@ -136,17 +136,17 @@ class CoreComponent(Component):
     def update(self, config: Dict[str, Any]) -> bool:
         """Update core component"""
         try:
-            self.logger.info("Updating SuperClaude core component...")
+            self.logger.info("SuperClaudeコアコンポーネントを更新中...")
             
             # Check current version
             current_version = self.settings_manager.get_component_version("core")
             target_version = self.get_metadata()["version"]
             
             if current_version == target_version:
-                self.logger.info(f"Core component already at version {target_version}")
+                self.logger.info(f"コアコンポーネントは既にバージョン{target_version}です")
                 return True
             
-            self.logger.info(f"Updating core component from {current_version} to {target_version}")
+            self.logger.info(f"コアコンポーネントを{current_version}から{target_version}に更新中")
             
             # Create backup of existing files
             backup_files = []
@@ -156,7 +156,7 @@ class CoreComponent(Component):
                     backup_path = self.file_manager.backup_file(file_path)
                     if backup_path:
                         backup_files.append(backup_path)
-                        self.logger.debug(f"Backed up {filename}")
+                        self.logger.debug(f"バックアップしました {filename}")
             
             # Perform installation (overwrites existing files)
             success = self.install(config)
@@ -169,22 +169,22 @@ class CoreComponent(Component):
                     except Exception:
                         pass  # Ignore cleanup errors
                 
-                self.logger.success(f"Core component updated to version {target_version}")
+                self.logger.success(f"コアコンポーネントがバージョン{target_version}に更新されました")
             else:
                 # Restore from backup on failure
-                self.logger.warning("Update failed, restoring from backup...")
+                self.logger.warning("更新に失敗しました。バックアップから復元しています...")
                 for backup_path in backup_files:
                     try:
                         original_path = backup_path.with_suffix('')
                         shutil.move(str(backup_path), str(original_path))
-                        self.logger.debug(f"Restored {original_path.name}")
+                        self.logger.debug(f"復元しました {original_path.name}")
                     except Exception as e:
-                        self.logger.error(f"Could not restore {backup_path}: {e}")
+                        self.logger.error(f"{backup_path}を復元できませんでした: {e}")
             
             return success
             
         except Exception as e:
-            self.logger.exception(f"Unexpected error during core update: {e}")
+            self.logger.exception(f"コアの更新中に予期しないエラーが発生しました: {e}")
             return False
     
     def validate_installation(self) -> Tuple[bool, List[str]]:
@@ -195,32 +195,32 @@ class CoreComponent(Component):
         for filename in self.component_files:
             file_path = self.install_dir / filename
             if not file_path.exists():
-                errors.append(f"Missing framework file: {filename}")
+                errors.append(f"フレームワークファイルが見つかりません: {filename}")
             elif not file_path.is_file():
-                errors.append(f"Framework file is not a regular file: {filename}")
+                errors.append(f"フレームワークファイルは通常のファイルではありません: {filename}")
         
         # Check metadata registration
         if not self.settings_manager.is_component_installed("core"):
-            errors.append("Core component not registered in metadata")
+            errors.append("コアコンポーネントがメタデータに登録されていません")
         else:
             # Check version matches
             installed_version = self.settings_manager.get_component_version("core")
             expected_version = self.get_metadata()["version"]
             if installed_version != expected_version:
-                errors.append(f"Version mismatch: installed {installed_version}, expected {expected_version}")
+                errors.append(f"バージョンの不一致: インストール済み {installed_version}, 期待値 {expected_version}")
         
         # Check metadata structure
         try:
             framework_config = self.settings_manager.get_metadata_setting("framework")
             if not framework_config:
-                errors.append("Missing framework configuration in metadata")
+                errors.append("メタデータにフレームワーク設定がありません")
             else:
                 required_keys = ["version", "name", "description"]
                 for key in required_keys:
                     if key not in framework_config:
-                        errors.append(f"Missing framework.{key} in metadata")
+                        errors.append(f"メタデータにframework.{key}がありません")
         except Exception as e:
-            errors.append(f"Could not validate metadata: {e}")
+            errors.append(f"メタデータを検証できませんでした: {e}")
         
         return len(errors) == 0, errors
     

@@ -1,5 +1,5 @@
 """
-Base installer logic for SuperClaude installation system fixed some issues
+SuperClaudeインストールシステムの基本インストーラーロジック いくつかの問題を修正
 """
 
 from typing import List, Dict, Optional, Set, Tuple, Any
@@ -12,17 +12,17 @@ from ..utils.logger import get_logger
 
 
 class Installer:
-    """Main installer orchestrator"""
+    """メインインストーラーオーケストレーター"""
 
     def __init__(self,
                  install_dir: Optional[Path] = None,
                  dry_run: bool = False):
         """
-        Initialize installer
+        インストーラーを初期化します
         
         Args:
-            install_dir: Target installation directory
-            dry_run: If True, only simulate installation
+            install_dir: ターゲットインストールディレクトリ
+            dry_run: Trueの場合、インストールをシミュレートするだけです
         """
         from .. import DEFAULT_INSTALL_DIR
         self.install_dir = install_dir or DEFAULT_INSTALL_DIR
@@ -38,36 +38,36 @@ class Installer:
 
     def register_component(self, component: Component) -> None:
         """
-        Register a component for installation
+        インストール用のコンポーネントを登録します
         
         Args:
-            component: Component instance to register
+            component: 登録するコンポーネントインスタンス
         """
         metadata = component.get_metadata()
         self.components[metadata['name']] = component
 
     def register_components(self, components: List[Component]) -> None:
         """
-        Register multiple components
+        複数のコンポーネントを登録します
         
         Args:
-            components: List of component instances
+            components: コンポーネントインスタンスのリスト
         """
         for component in components:
             self.register_component(component)
 
     def resolve_dependencies(self, component_names: List[str]) -> List[str]:
         """
-        Resolve component dependencies in correct installation order
+        正しいインストール順序でコンポーネントの依存関係を解決します
         
         Args:
-            component_names: List of component names to install
+            component_names: インストールするコンポーネント名のリスト
             
         Returns:
-            Ordered list of component names including dependencies
+            依存関係を含む、順序付けされたコンポーネント名のリスト
             
         Raises:
-            ValueError: If circular dependencies detected or unknown component
+            ValueError: 循環依存が検出されたか、不明なコンポーネントがある場合
         """
         resolved = []
         resolving = set()
@@ -78,10 +78,10 @@ class Installer:
 
             if name in resolving:
                 raise ValueError(
-                    f"Circular dependency detected involving {name}")
+                    f"循環依存が検出されました: {name}")
 
             if name not in self.components:
-                raise ValueError(f"Unknown component: {name}")
+                raise ValueError(f"不明なコンポーネント: {name}")
 
             resolving.add(name)
 
@@ -100,10 +100,10 @@ class Installer:
 
     def validate_system_requirements(self) -> Tuple[bool, List[str]]:
         """
-        Validate system requirements for all registered components
+        登録されているすべてのコンポーネントのシステム要件を検証します
         
         Returns:
-            Tuple of (success: bool, error_messages: List[str])
+            (成功: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
 
@@ -113,10 +113,10 @@ class Installer:
             free_mb = stat.free / (1024 * 1024)
             if free_mb < 500:
                 errors.append(
-                    f"Insufficient disk space: {free_mb:.1f}MB free (500MB required)"
+                    f"ディスク容量が不足しています: 空き容量 {free_mb:.1f}MB (500MB が必要です)"
                 )
         except Exception as e:
-            errors.append(f"Could not check disk space: {e}")
+            errors.append(f"ディスク容量を確認できませんでした: {e}")
 
         # Check write permissions
         test_file = self.install_dir / ".write_test"
@@ -125,16 +125,16 @@ class Installer:
             test_file.touch()
             test_file.unlink()
         except Exception as e:
-            errors.append(f"No write permission to {self.install_dir}: {e}")
+            errors.append(f"{self.install_dir}への書き込み権限がありません: {e}")
 
         return len(errors) == 0, errors
 
     def create_backup(self) -> Optional[Path]:
         """
-        Create backup of existing installation
+        既存のインストールのバックアップを作成します
         
         Returns:
-            Path to backup archive or None if no existing installation
+            バックアップアーカイブへのパス、または既存のインストールがない場合はNone
         """
         if not self.install_dir.exists():
             return None
@@ -168,7 +168,7 @@ class Installer:
                             shutil.copytree(item, temp_backup / item.name)
                     except Exception as e:
                         # Log warning but continue backup process
-                        self.logger.warning(f"Could not backup {item.name}: {e}")
+                        self.logger.warning(f"{item.name}をバックアップできませんでした: {e}")
 
             # Create archive only if there are files to backup
             if any(temp_backup.iterdir()):
@@ -179,7 +179,7 @@ class Installer:
                 # Create empty backup file to indicate backup was attempted
                 backup_path.touch()
                 self.logger.warning(
-                    f"No files to backup, created empty backup marker: {backup_path.name}"
+                    f"バックアップするファイルがありません。空のバックアップマーカーを作成しました: {backup_path.name}"
                 )
 
         self.backup_path = backup_path
@@ -188,14 +188,14 @@ class Installer:
     def install_component(self, component_name: str,
                           config: Dict[str, Any]) -> bool:
         """
-        Install a single component
+        単一のコンポーネントをインストールします
         
         Args:
-            component_name: Name of component to install
-            config: Installation configuration
+            component_name: インストールするコンポーネントの名前
+            config: インストール設定
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         if component_name not in self.components:
             raise ValueError(f"Unknown component: {component_name}")
@@ -209,7 +209,7 @@ class Installer:
         # Check prerequisites
         success, errors = component.validate_prerequisites()
         if not success:
-            self.logger.error(f"Prerequisites failed for {component_name}:")
+            self.logger.error(f"{component_name}の前提条件が失敗しました:")
             for error in errors:
                 self.logger.error(f"  - {error}")
             self.failed_components.add(component_name)
@@ -218,7 +218,7 @@ class Installer:
         # Perform installation
         try:
             if self.dry_run:
-                self.logger.info(f"[DRY RUN] Would install {component_name}")
+                self.logger.info(f"[ドライラン] {component_name}をインストールします")
                 success = True
             else:
                 success = component.install(config)
@@ -232,7 +232,7 @@ class Installer:
             return success
 
         except Exception as e:
-            self.logger.error(f"Error installing {component_name}: {e}")
+            self.logger.error(f"{component_name}のインストール中にエラーが発生しました: {e}")
             self.failed_components.add(component_name)
             return False
 
@@ -240,14 +240,14 @@ class Installer:
                            component_names: List[str],
                            config: Optional[Dict[str, Any]] = None) -> bool:
         """
-        Install multiple components in dependency order
+        依存関係の順序で複数のコンポーネントをインストールします
         
         Args:
-            component_names: List of component names to install
-            config: Installation configuration
+            component_names: インストールするコンポーネント名のリスト
+            config: インストール設定
             
         Returns:
-            True if all successful, False if any failed
+            すべて成功した場合はTrue、いずれかが失敗した場合はFalse
         """
         config = config or {}
 
@@ -255,30 +255,30 @@ class Installer:
         try:
             ordered_names = self.resolve_dependencies(component_names)
         except ValueError as e:
-            self.logger.error(f"Dependency resolution error: {e}")
+            self.logger.error(f"依存関係の解決エラー: {e}")
             return False
 
         # Validate system requirements
         success, errors = self.validate_system_requirements()
         if not success:
-            self.logger.error("System requirements not met:")
+            self.logger.error("システム要件が満たされていません:")
             for error in errors:
                 self.logger.error(f"  - {error}")
             return False
 
         # Create backup if updating
         if self.install_dir.exists() and not self.dry_run:
-            self.logger.info("Creating backup of existing installation...")
+            self.logger.info("既存のインストールのバックアップを作成中...")
             try:
                 self.create_backup()
             except Exception as e:
-                self.logger.error(f"Failed to create backup: {e}")
+                self.logger.error(f"バックアップの作成に失敗しました: {e}")
                 return False
 
         # Install each component
         all_success = True
         for name in ordered_names:
-            self.logger.info(f"Installing {name}...")
+            self.logger.info(f"{name}をインストール中...")
             if not self.install_component(name, config):
                 all_success = False
                 # Continue installing other components even if one fails
@@ -289,8 +289,8 @@ class Installer:
         return all_success
 
     def _run_post_install_validation(self) -> None:
-        """Run post-installation validation for all installed components"""
-        self.logger.info("Running post-installation validation...")
+        """インストールされたすべてのコンポーネントに対してインストール後の検証を実行"""
+        self.logger.info("インストール後の検証を実行中...")
 
         all_valid = True
         for name in self.installed_components:
@@ -298,28 +298,28 @@ class Installer:
             success, errors = component.validate_installation()
 
             if success:
-                self.logger.info(f"  ✓ {name}: Valid")
+                self.logger.info(f"  ✓ {name}: 有効")
             else:
-                self.logger.error(f"  ✗ {name}: Invalid")
+                self.logger.error(f"  ✗ {name}: 無効")
                 for error in errors:
                     self.logger.error(f"    - {error}")
                 all_valid = False
 
         if all_valid:
-            self.logger.info("All components validated successfully!")
+            self.logger.info("すべてのコンポーネントが正常に検証されました！")
         else:
-            self.logger.error("Some components failed validation. Check errors above.")
+            self.logger.error("一部のコンポーネントの検証に失敗しました。上記のエラーを確認してください。")
     def update_components(self, component_names: List[str], config: Dict[str, Any]) -> bool:
-        """Alias for update operation (uses install logic)"""
+        """更新操作のエイリアス（インストールロジックを使用）"""
         return self.install_components(component_names, config)
 
 
     def get_installation_summary(self) -> Dict[str, Any]:
         """
-        Get summary of installation results
+        インストール結果の概要を取得します
 
         Returns:
-            Dict with installation statistics and results
+            インストールの統計と結果を含む辞書
         """
         return {
             'installed': list(self.installed_components),

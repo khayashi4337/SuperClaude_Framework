@@ -24,26 +24,26 @@ from . import OperationBase
 
 
 class UpdateOperation(OperationBase):
-    """Update operation implementation"""
+    """更新操作の実装"""
     
     def __init__(self):
         super().__init__("update")
 
 
 def register_parser(subparsers, global_parser=None) -> argparse.ArgumentParser:
-    """Register update CLI arguments"""
+    """更新CLI引数を登録"""
     parents = [global_parser] if global_parser else []
     
     parser = subparsers.add_parser(
         "update",
-        help="Update existing SuperClaude installation",
-        description="Update SuperClaude Framework components to latest versions",
+        help="既存のSuperClaudeインストールを更新",
+        description="SuperClaudeフレームワークコンポーネントを最新バージョンに更新",
         epilog="""
-Examples:
-  SuperClaude update                       # Interactive update
-  SuperClaude update --check --verbose     # Check for updates (verbose)
-  SuperClaude update --components core mcp # Update specific components
-  SuperClaude update --backup --force      # Create backup before update (forced)
+例:
+  SuperClaude update                       # 対話的な更新
+  SuperClaude update --check --verbose     # 更新を確認 (詳細)
+  SuperClaude update --components core mcp # 特定のコンポーネントを更新
+  SuperClaude update --backup --force      # 更新前にバックアップを作成 (強制)
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=parents
@@ -53,46 +53,46 @@ Examples:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Check for available updates without installing"
+        help="インストールせずに利用可能な更新を確認"
     )
     
     parser.add_argument(
         "--components",
         type=str,
         nargs="+",
-        help="Specific components to update"
+        help="更新する特定のコンポーネント"
     )
     
     # Backup options
     parser.add_argument(
         "--backup",
         action="store_true",
-        help="Create backup before update"
+        help="更新前にバックアップを作成"
     )
     
     parser.add_argument(
         "--no-backup",
         action="store_true",
-        help="Skip backup creation"
+        help="バックアップ作成をスキップ"
     )
     
     # Update options
     parser.add_argument(
         "--reinstall",
         action="store_true",
-        help="Reinstall components even if versions match"
+        help="バージョンが一致してもコンポーネントを再インストール"
     )
     
     return parser
 
 def check_installation_exists(install_dir: Path) -> bool:
-    """Check if SuperClaude installation exists"""
+    """SuperClaudeのインストールが存在するか確認"""
     settings_manager = SettingsService(install_dir)
 
     return settings_manager.check_installation_exists()
 
 def get_installed_components(install_dir: Path) -> Dict[str, Dict[str, Any]]:
-    """Get currently installed components and their versions"""
+    """現在インストールされているコンポーネントとそのバージョンを取得"""
     try:
         settings_manager = SettingsService(install_dir)
         return settings_manager.get_installed_components()
@@ -101,7 +101,7 @@ def get_installed_components(install_dir: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def get_available_updates(installed_components: Dict[str, str], registry: ComponentRegistry) -> Dict[str, Dict[str, str]]:
-    """Check for available updates"""
+    """利用可能な更新を確認"""
     updates = {}
     
     for component_name, current_version in installed_components.items():
@@ -113,7 +113,7 @@ def get_available_updates(installed_components: Dict[str, str], registry: Compon
                     updates[component_name] = {
                         "current": current_version,
                         "available": available_version,
-                        "description": metadata.get("description", "No description")
+                        "description": metadata.get("description", "説明なし")
                     }
         except Exception:
             continue
@@ -122,15 +122,15 @@ def get_available_updates(installed_components: Dict[str, str], registry: Compon
 
 
 def display_update_check(installed_components: Dict[str, str], available_updates: Dict[str, Dict[str, str]]) -> None:
-    """Display update check results"""
+    """更新チェック結果を表示"""
     print(f"\n{Colors.CYAN}{Colors.BRIGHT}Update Check Results{Colors.RESET}")
     print("=" * 50)
     
     if not installed_components:
-        print(f"{Colors.YELLOW}No SuperClaude installation found{Colors.RESET}")
+        print(f"{Colors.YELLOW}SuperClaudeのインストールが見つかりません{Colors.RESET}")
         return
     
-    print(f"{Colors.BLUE}Currently installed components:{Colors.RESET}")
+    print(f"{Colors.BLUE}現在インストールされているコンポーネント:{Colors.RESET}")
     for component, version in installed_components.items():
         print(f"  {component}: v{version}")
     
@@ -140,14 +140,14 @@ def display_update_check(installed_components: Dict[str, str], available_updates
             print(f"  {component}: v{info['current']} → v{info['available']}")
             print(f"    {info['description']}")
     else:
-        print(f"\n{Colors.GREEN}All components are up to date{Colors.RESET}")
+        print(f"\n{Colors.GREEN}すべてのコンポーネントは最新です{Colors.RESET}")
     
     print()
 
 
 def get_components_to_update(args: argparse.Namespace, installed_components: Dict[str, str], 
                            available_updates: Dict[str, Dict[str, str]]) -> Optional[List[str]]:
-    """Determine which components to update"""
+    """更新するコンポーネントを決定"""
     logger = get_logger()
     
     # Explicit components specified
@@ -155,13 +155,13 @@ def get_components_to_update(args: argparse.Namespace, installed_components: Dic
         # Validate that specified components are installed
         invalid_components = [c for c in args.components if c not in installed_components]
         if invalid_components:
-            logger.error(f"Components not installed: {invalid_components}")
+            logger.error(f"インストールされていないコンポーネント: {invalid_components}")
             return None
         return args.components
     
     # If no updates available and not forcing reinstall
     if not available_updates and not args.reinstall:
-        logger.info("No updates available")
+        logger.info("利用可能な更新はありません")
         return []
     
     # Interactive selection
@@ -176,14 +176,14 @@ def get_components_to_update(args: argparse.Namespace, installed_components: Dic
 
 def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> Dict[str, str]:
     """
-    Collect API keys for servers that require them during update
+    更新中にサーバーが必要とするAPIキーを収集します
     
     Args:
-        selected_servers: List of selected server keys
-        mcp_instance: MCP component instance
+        selected_servers: 選択されたサーバーキーのリスト
+        mcp_instance: MCPコンポーネントインスタンス
         
     Returns:
-        Dictionary of environment variable names to API key values
+        環境変数名とAPIキー値の辞書
     """
     # Filter servers needing keys
     servers_needing_keys = [
@@ -197,8 +197,8 @@ def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> D
         return {}
     
     # Display API key configuration header
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══ API Key Configuration ═══{Colors.RESET}")
-    print(f"{Colors.YELLOW}New MCP servers require API keys for full functionality:{Colors.RESET}\n")
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}═══ APIキー設定 ═══{Colors.RESET}")
+    print(f"{Colors.YELLOW}新しいMCPサーバーは全機能を利用するためにAPIキーが必要です:{Colors.RESET}\n")
     
     collected_keys = {}
     for server_key, server_info in servers_needing_keys:
@@ -215,11 +215,11 @@ def collect_api_keys_for_servers(selected_servers: List[str], mcp_instance) -> D
 
 def interactive_update_selection(available_updates: Dict[str, Dict[str, str]], 
                                 installed_components: Dict[str, str]) -> Optional[List[str]]:
-    """Interactive update selection"""
+    """対話的な更新の選択"""
     if not available_updates:
         return []
     
-    print(f"\n{Colors.CYAN}Available Updates:{Colors.RESET}")
+    print(f"\n{Colors.CYAN}利用可能な更新:{Colors.RESET}")
     
     # Create menu options
     update_options = []
@@ -231,12 +231,12 @@ def interactive_update_selection(available_updates: Dict[str, Dict[str, str]],
     
     # Add bulk options
     preset_options = [
-        "Update All Components",
-        "Select Individual Components", 
-        "Cancel Update"
+        "すべてのコンポーネントを更新",
+        "個別のコンポーネントを選択",
+        "更新をキャンセル"
     ]
     
-    menu = Menu("Select update option:", preset_options)
+    menu = Menu("更新オプションを選択:", preset_options)
     choice = menu.display()
     
     if choice == -1 or choice == 2:  # Cancelled
@@ -244,7 +244,7 @@ def interactive_update_selection(available_updates: Dict[str, Dict[str, str]],
     elif choice == 0:  # Update all
         return component_names
     elif choice == 1:  # Select individual
-        component_menu = Menu("Select components to update:", update_options, multi_select=True)
+        component_menu = Menu("更新するコンポーネントを選択:", update_options, multi_select=True)
         selections = component_menu.display()
         
         if not selections:
@@ -257,12 +257,12 @@ def interactive_update_selection(available_updates: Dict[str, Dict[str, str]],
 
 def display_update_plan(components: List[str], available_updates: Dict[str, Dict[str, str]], 
                        installed_components: Dict[str, str], install_dir: Path) -> None:
-    """Display update plan"""
+    """更新計画を表示"""
     print(f"\n{Colors.CYAN}{Colors.BRIGHT}Update Plan{Colors.RESET}")
     print("=" * 50)
     
-    print(f"{Colors.BLUE}Installation Directory:{Colors.RESET} {install_dir}")
-    print(f"{Colors.BLUE}Components to update:{Colors.RESET}")
+    print(f"{Colors.BLUE}インストールディレクトリ:{Colors.RESET} {install_dir}")
+    print(f"{Colors.BLUE}更新するコンポーネント:{Colors.RESET}")
     
     for i, component_name in enumerate(components, 1):
         if component_name in available_updates:
@@ -270,13 +270,13 @@ def display_update_plan(components: List[str], available_updates: Dict[str, Dict
             print(f"  {i}. {component_name}: v{info['current']} → v{info['available']}")
         else:
             current_version = installed_components.get(component_name, "unknown")
-            print(f"  {i}. {component_name}: v{current_version} (reinstall)")
+            print(f"  {i}. {component_name}: v{current_version} (再インストール)")
     
     print()
 
 
 def perform_update(components: List[str], args: argparse.Namespace) -> bool:
-    """Perform the actual update"""
+    """実際の更新を実行"""
     logger = get_logger()
     start_time = time.time()
     
@@ -292,7 +292,7 @@ def perform_update(components: List[str], args: argparse.Namespace) -> bool:
         component_instances = registry.create_component_instances(components, args.install_dir)
         
         if not component_instances:
-            logger.error("No valid component instances created")
+            logger.error("有効なコンポーネントインスタンスが作成されませんでした")
             return False
         
         # Handle MCP component specially - collect API keys for new servers
@@ -313,7 +313,7 @@ def perform_update(components: List[str], args: argparse.Namespace) -> bool:
                     # Store keys for MCP component to use during update
                     mcp_instance.collected_api_keys = collected_api_keys
                     
-                    logger.info(f"Collected {len(collected_api_keys)} API keys for MCP server update")
+                    logger.info(f"収集済み {len(collected_api_keys)} MCPサーバー更新用のAPIキー")
         
         # Register components with installer
         installer.register_components(list(component_instances.values()))
@@ -321,12 +321,12 @@ def perform_update(components: List[str], args: argparse.Namespace) -> bool:
         # Setup progress tracking
         progress = ProgressBar(
             total=len(components),
-            prefix="Updating: ",
+            prefix="更新中: ",
             suffix=""
         )
         
         # Update components
-        logger.info(f"Updating {len(components)} components...")
+        logger.info(f"更新中 {len(components)} コンポーネント...")
         
         # Determine backup strategy
         backup = args.backup or (not args.no_backup and not args.dry_run)
@@ -344,43 +344,43 @@ def perform_update(components: List[str], args: argparse.Namespace) -> bool:
         # Update progress
         for i, component_name in enumerate(components):
             if component_name in installer.updated_components:
-                progress.update(i + 1, f"Updated {component_name}")
+                progress.update(i + 1, f"更新済み {component_name}")
             else:
-                progress.update(i + 1, f"Failed {component_name}")
+                progress.update(i + 1, f"失敗 {component_name}")
             time.sleep(0.1)  # Brief pause for visual effect
         
-        progress.finish("Update complete")
+        progress.finish("更新完了")
         
         # Show results
         duration = time.time() - start_time
         
         if success:
-            logger.success(f"Update completed successfully in {duration:.1f} seconds")
+            logger.success(f"更新は正常に完了しました: {duration:.1f} 秒")
             
             # Show summary
             summary = installer.get_update_summary()
             if summary.get('updated'):
-                logger.info(f"Updated components: {', '.join(summary['updated'])}")
+                logger.info(f"更新されたコンポーネント: {', '.join(summary['updated'])}")
             
             if summary.get('backup_path'):
-                logger.info(f"Backup created: {summary['backup_path']}")
+                logger.info(f"バックアップ作成済み: {summary['backup_path']}")
                 
         else:
-            logger.error(f"Update completed with errors in {duration:.1f} seconds")
+            logger.error(f"更新はエラーで完了しました: {duration:.1f} 秒")
             
             summary = installer.get_update_summary()
             if summary.get('failed'):
-                logger.error(f"Failed components: {', '.join(summary['failed'])}")
+                logger.error(f"失敗したコンポーネント: {', '.join(summary['failed'])}")
         
         return success
         
     except Exception as e:
-        logger.exception(f"Unexpected error during update: {e}")
+        logger.exception(f"更新中に予期しないエラーが発生しました: {e}")
         return False
 
 
 def run(args: argparse.Namespace) -> int:
-    """Execute update operation with parsed arguments"""
+    """解析された引数で更新操作を実行"""
     operation = UpdateOperation()
     operation.setup_operation_logging(args)
     logger = get_logger()
@@ -390,8 +390,8 @@ def run(args: argparse.Namespace) -> int:
 
     if not str(actual_dir).startswith(str(expected_home)):
         print(f"\n[✗] Installation must be inside your user profile directory.")
-        print(f"    Expected prefix: {expected_home}")
-        print(f"    Provided path:   {actual_dir}")
+        print(f"    期待されるプレフィックス: {expected_home}")
+        print(f"    指定されたパス:   {actual_dir}")
         sys.exit(1)
     
     try:
@@ -405,18 +405,18 @@ def run(args: argparse.Namespace) -> int:
         # Display header
         if not args.quiet:
             display_header(
-                f"SuperClaude Update v{__version__}",
-                "Updating SuperClaude framework components"
+                f"SuperClaude 更新 v{__version__}",
+                "SuperClaudeフレームワークコンポーネントを更新中"
             )
         
         # Check if SuperClaude is installed
         if not check_installation_exists(args.install_dir):
-            logger.error(f"SuperClaude installation not found in {args.install_dir}")
-            logger.info("Use 'SuperClaude install' to install SuperClaude first")
+            logger.error(f"SuperClaudeのインストールが次の場所に見つかりません: {args.install_dir}")
+            logger.info("最初に 'SuperClaude install' を使用してSuperClaudeをインストールしてください")
             return 1
         
         # Create component registry
-        logger.info("Checking for available updates...")
+        logger.info("利用可能な更新を確認中...")
         
         registry = ComponentRegistry(PROJECT_ROOT / "setup" / "components")
         registry.discover_components()
@@ -424,7 +424,7 @@ def run(args: argparse.Namespace) -> int:
         # Get installed components
         installed_components = get_installed_components(args.install_dir)
         if not installed_components:
-            logger.error("Could not determine installed components")
+            logger.error("インストールされているコンポーネントを特定できませんでした")
             return 1
         
         # Check for available updates
@@ -441,10 +441,10 @@ def run(args: argparse.Namespace) -> int:
         # Get components to update
         components = get_components_to_update(args, installed_components, available_updates)
         if components is None:
-            logger.info("Update cancelled by user")
+            logger.info("ユーザーによって更新がキャンセルされました")
             return 0
         elif not components:
-            logger.info("No components selected for update")
+            logger.info("更新対象のコンポーネントが選択されていません")
             return 0
         
         # Display update plan
@@ -452,8 +452,8 @@ def run(args: argparse.Namespace) -> int:
             display_update_plan(components, available_updates, installed_components, args.install_dir)
             
             if not args.dry_run:
-                if not args.yes and not confirm("Proceed with update?", default=True):
-                    logger.info("Update cancelled by user")
+                if not args.yes and not confirm("更新を続行しますか？", default=True):
+                    logger.info("ユーザーによって更新がキャンセルされました")
                     return 0
         
         # Perform update
@@ -461,17 +461,17 @@ def run(args: argparse.Namespace) -> int:
         
         if success:
             if not args.quiet:
-                display_success("SuperClaude update completed successfully!")
+                display_success("SuperClaudeの更新が正常に完了しました！")
                 
                 if not args.dry_run:
-                    print(f"\n{Colors.CYAN}Next steps:{Colors.RESET}")
-                    print(f"1. Restart your Claude Code session")
-                    print(f"2. Updated components are now available")
-                    print(f"3. Check for any breaking changes in documentation")
+                    print(f"\n{Colors.CYAN}次のステップ:{Colors.RESET}")
+                    print(f"1. Claude Codeセッションを再起動してください")
+                    print(f"2. 更新されたコンポーネントが利用可能です")
+                    print(f"3. ドキュメントで破壊的変更がないか確認してください")
                     
             return 0
         else:
-            display_error("Update failed. Check logs for details.")
+            display_error("更新に失敗しました。詳細はログを確認してください。")
             return 1
             
     except KeyboardInterrupt:

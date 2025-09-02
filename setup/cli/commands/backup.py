@@ -23,113 +23,113 @@ from . import OperationBase
 
 
 class BackupOperation(OperationBase):
-    """Backup operation implementation"""
+    """バックアップ操作の実装"""
     
     def __init__(self):
         super().__init__("backup")
 
 
 def register_parser(subparsers, global_parser=None) -> argparse.ArgumentParser:
-    """Register backup CLI arguments"""
+    """バックアップCLI引数を登録"""
     parents = [global_parser] if global_parser else []
     
     parser = subparsers.add_parser(
         "backup",
-        help="Backup and restore SuperClaude installations",
-        description="Create, list, restore, and manage SuperClaude installation backups",
+        help="SuperClaudeのインストールをバックアップおよび復元します",
+        description="SuperClaudeのインストールバックアップを作成、一覧表示、復元、管理します",
         epilog="""
-Examples:
-  SuperClaude backup --create               # Create new backup
-  SuperClaude backup --list --verbose       # List available backups (verbose)
-  SuperClaude backup --restore              # Interactive restore
-  SuperClaude backup --restore backup.tar.gz  # Restore specific backup
-  SuperClaude backup --info backup.tar.gz   # Show backup information
-  SuperClaude backup --cleanup --force      # Clean up old backups (forced)
+例:
+  SuperClaude backup --create               # 新しいバックアップを作成
+  SuperClaude backup --list --verbose       # 利用可能なバックアップを一覧表示（詳細）
+  SuperClaude backup --restore              # 対話的に復元
+  SuperClaude backup --restore backup.tar.gz  # 特定のバックアップを復元
+  SuperClaude backup --info backup.tar.gz   # バックアップ情報を表示
+  SuperClaude backup --cleanup --force      # 古いバックアップをクリーンアップ（強制）
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=parents
     )
     
-    # Backup operations (mutually exclusive)
+    # バックアップ操作（相互に排他的）
     operation_group = parser.add_mutually_exclusive_group(required=True)
     
     operation_group.add_argument(
         "--create",
         action="store_true",
-        help="Create a new backup"
+        help="新しいバックアップを作成します"
     )
     
     operation_group.add_argument(
         "--list",
         action="store_true",
-        help="List available backups"
+        help="利用可能なバックアップを一覧表示します"
     )
     
     operation_group.add_argument(
         "--restore",
         nargs="?",
         const="interactive",
-        help="Restore from backup (optionally specify backup file)"
+        help="バックアップから復元します（オプションでバックアップファイルを指定）"
     )
     
     operation_group.add_argument(
         "--info",
         type=str,
-        help="Show information about a specific backup file"
+        help="特定のバックアップファイルに関する情報を表示します"
     )
     
     operation_group.add_argument(
         "--cleanup",
         action="store_true",
-        help="Clean up old backup files"
+        help="古いバックアップファイルをクリーンアップします"
     )
     
-    # Backup options
+    # バックアップオプション
     parser.add_argument(
         "--backup-dir",
         type=Path,
-        help="Backup directory (default: <install-dir>/backups)"
+        help="バックアップディレクトリ（デフォルト: <install-dir>/backups）"
     )
     
     parser.add_argument(
         "--name",
         type=str,
-        help="Custom backup name (for --create)"
+        help="カスタムバックアップ名（--create用）"
     )
     
     parser.add_argument(
         "--compress",
         choices=["none", "gzip", "bzip2"],
         default="gzip",
-        help="Compression method (default: gzip)"
+        help="圧縮方法（デフォルト: gzip）"
     )
     
-    # Restore options
+    # 復元オプション
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Overwrite existing files during restore"
+        help="復元中に既存のファイルを上書きします"
     )
     
-    # Cleanup options
+    # クリーンアップオプション
     parser.add_argument(
         "--keep",
         type=int,
         default=5,
-        help="Number of backups to keep during cleanup (default: 5)"
+        help="クリーンアップ中に保持するバックアップの数（デフォルト: 5）"
     )
     
     parser.add_argument(
         "--older-than",
         type=int,
-        help="Remove backups older than N days"
+        help="N日より古いバックアップを削除します"
     )
     
     return parser
 
 
 def get_backup_directory(args: argparse.Namespace) -> Path:
-    """Get the backup directory path"""
+    """バックアップディレクトリのパスを取得"""
     if args.backup_dir:
         return args.backup_dir
     else:
@@ -137,14 +137,14 @@ def get_backup_directory(args: argparse.Namespace) -> Path:
 
 
 def check_installation_exists(install_dir: Path) -> bool:
-    """Check if SuperClaude installation (v2 included) exists"""
+    """SuperClaudeのインストール（v2含む）が存在するか確認"""
     settings_manager = SettingsService(install_dir)
 
     return settings_manager.check_installation_exists() or settings_manager.check_v2_installation_exists()
 
 
 def get_backup_info(backup_path: Path) -> Dict[str, Any]:
-    """Get information about a backup file"""
+    """バックアップファイルに関する情報を取得"""
     info = {
         "path": backup_path,
         "exists": backup_path.exists(),
@@ -157,12 +157,12 @@ def get_backup_info(backup_path: Path) -> Dict[str, Any]:
         return info
     
     try:
-        # Get file stats
+        # ファイル統計を取得
         stats = backup_path.stat()
         info["size"] = stats.st_size
         info["created"] = datetime.fromtimestamp(stats.st_mtime)
         
-        # Try to read metadata from backup
+        # バックアップからメタデータを読み込もうと試みる
         if backup_path.suffix == ".gz":
             mode = "r:gz"
         elif backup_path.suffix == ".bz2":
@@ -171,16 +171,16 @@ def get_backup_info(backup_path: Path) -> Dict[str, Any]:
             mode = "r"
         
         with tarfile.open(backup_path, mode) as tar:
-            # Look for metadata file
+            # メタデータファイルを探す
             try:
                 metadata_member = tar.getmember("backup_metadata.json")
                 metadata_file = tar.extractfile(metadata_member)
                 if metadata_file:
                     info["metadata"] = json.loads(metadata_file.read().decode())
             except KeyError:
-                pass  # No metadata file
+                pass  # メタデータファイルなし
             
-            # Get list of files in backup
+            # バックアップ内のファイルリストを取得
             info["files"] = len(tar.getnames())
             
     except Exception as e:
@@ -190,41 +190,41 @@ def get_backup_info(backup_path: Path) -> Dict[str, Any]:
 
 
 def list_backups(backup_dir: Path) -> List[Dict[str, Any]]:
-    """List all available backups"""
+    """利用可能なすべてのバックアップを一覧表示"""
     backups = []
     
     if not backup_dir.exists():
         return backups
     
-    # Find all backup files
+    # すべてのバックアップファイルを検索
     for backup_file in backup_dir.glob("*.tar*"):
         if backup_file.is_file():
             info = get_backup_info(backup_file)
             backups.append(info)
     
-    # Sort by creation date (newest first)
+    # 作成日でソート（新しい順）
     backups.sort(key=lambda x: x.get("created", datetime.min), reverse=True)
     
     return backups
 
 
 def display_backup_list(backups: List[Dict[str, Any]]) -> None:
-    """Display list of available backups"""
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}Available Backups{Colors.RESET}")
+    """利用可能なバックアップのリストを表示"""
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}利用可能なバックアップ{Colors.RESET}")
     print("=" * 70)
     
     if not backups:
-        print(f"{Colors.YELLOW}No backups found{Colors.RESET}")
+        print(f"{Colors.YELLOW}バックアップが見つかりません{Colors.RESET}")
         return
     
-    print(f"{'Name':<30} {'Size':<10} {'Created':<20} {'Files':<8}")
+    print(f"{'名前':<30} {'サイズ':<10} {'作成日時':<20} {'ファイル数':<8}")
     print("-" * 70)
     
     for backup in backups:
         name = backup["path"].name
-        size = format_size(backup["size"]) if backup["size"] > 0 else "unknown"
-        created = backup["created"].strftime("%Y-%m-%d %H:%M") if backup["created"] else "unknown"
-        files = str(backup.get("files", "unknown"))
+        size = format_size(backup["size"]) if backup["size"] > 0 else "不明"
+        created = backup["created"].strftime("%Y-%m-%d %H:%M") if backup["created"] else "不明"
+        files = str(backup.get("files", "不明"))
         
         print(f"{name:<30} {size:<10} {created:<20} {files:<8}")
     
@@ -232,7 +232,7 @@ def display_backup_list(backups: List[Dict[str, Any]]) -> None:
 
 
 def create_backup_metadata(install_dir: Path) -> Dict[str, Any]:
-    """Create metadata for the backup"""
+    """バックアップ用のメタデータを作成"""
     metadata = {
         "backup_version": __version__,
         "created": datetime.now().isoformat(),
@@ -242,7 +242,7 @@ def create_backup_metadata(install_dir: Path) -> Dict[str, Any]:
     }
     
     try:
-        # Get installed components from metadata
+        # メタデータからインストール済みコンポーネントを取得
         settings_manager = SettingsService(install_dir)
         framework_config = settings_manager.get_metadata_setting("framework")
         
@@ -255,33 +255,33 @@ def create_backup_metadata(install_dir: Path) -> Dict[str, Any]:
                     if version:
                         metadata["components"][component_name] = version
     except Exception:
-        pass  # Continue without metadata
+        pass  # メタデータなしで続行
     
     return metadata
 
 
 def create_backup(args: argparse.Namespace) -> bool:
-    """Create a new backup"""
+    """新しいバックアップを作成"""
     logger = get_logger()
     
     try:
-        # Check if installation exists
+        # インストールが存在するか確認
         if not check_installation_exists(args.install_dir):
-            logger.error(f"No SuperClaude installation found in {args.install_dir}")
+            logger.error(f"{args.install_dir}にSuperClaudeのインストールが見つかりません")
             return False
         
-        # Setup backup directory
+        # バックアップディレクトリを設定
         backup_dir = get_backup_directory(args)
         backup_dir.mkdir(parents=True, exist_ok=True)
         
-        # Generate backup filename
+        # バックアップファイル名を生成
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if args.name:
             backup_name = f"{args.name}_{timestamp}"
         else:
             backup_name = f"superclaude_backup_{timestamp}"
         
-        # Determine compression
+        # 圧縮を決定
         if args.compress == "gzip":
             backup_file = backup_dir / f"{backup_name}.tar.gz"
             mode = "w:gz"
@@ -292,32 +292,32 @@ def create_backup(args: argparse.Namespace) -> bool:
             backup_file = backup_dir / f"{backup_name}.tar"
             mode = "w"
         
-        logger.info(f"Creating backup: {backup_file}")
+        logger.info(f"バックアップを作成中: {backup_file}")
         
-        # Create metadata
+        # メタデータを作成
         metadata = create_backup_metadata(args.install_dir)
         
-        # Create backup
+        # バックアップを作成
         start_time = time.time()
         
         with tarfile.open(backup_file, mode) as tar:
-            # Add metadata file
+            # メタデータファイルを追加
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
                 json.dump(metadata, temp_file, indent=2)
                 temp_file.flush()
                 tar.add(temp_file.name, arcname="backup_metadata.json")
-                Path(temp_file.name).unlink()  # Clean up temp file
+                Path(temp_file.name).unlink()  # 一時ファイルをクリーンアップ
             
-            # Add installation directory contents (excluding backups and local dirs)
+            # インストールディレクトリの内容を追加（バックアップとローカルディレクトリを除く）
             files_added = 0
             for item in args.install_dir.rglob("*"):
                 if item.is_file() and item != backup_file:
                     try:
-                        # Create relative path for archive
+                        # アーカイブ用の相対パスを作成
                         rel_path = item.relative_to(args.install_dir)
                         
-                        # Skip files in excluded directories
+                        # 除外されたディレクトリ内のファイルをスキップ
                         if rel_path.parts and rel_path.parts[0] in ["backups", "local"]:
                             continue
                             
@@ -325,44 +325,44 @@ def create_backup(args: argparse.Namespace) -> bool:
                         files_added += 1
                         
                         if files_added % 10 == 0:
-                            logger.debug(f"Added {files_added} files to backup")
+                            logger.debug(f"{files_added}個のファイルをバックアップに追加しました")
                             
                     except Exception as e:
-                        logger.warning(f"Could not add {item} to backup: {e}")
+                        logger.warning(f"{item}をバックアップに追加できませんでした: {e}")
         
         duration = time.time() - start_time
         file_size = backup_file.stat().st_size
         
-        logger.success(f"Backup created successfully in {duration:.1f} seconds")
-        logger.info(f"Backup file: {backup_file}")
-        logger.info(f"Files archived: {files_added}")
-        logger.info(f"Backup size: {format_size(file_size)}")
+        logger.success(f"バックアップは{duration:.1f}秒で正常に作成されました")
+        logger.info(f"バックアップファイル: {backup_file}")
+        logger.info(f"アーカイブされたファイル数: {files_added}")
+        logger.info(f"バックアップサイズ: {format_size(file_size)}")
         
         return True
         
     except Exception as e:
-        logger.exception(f"Failed to create backup: {e}")
+        logger.exception(f"バックアップの作成に失敗しました: {e}")
         return False
 
 
 def restore_backup(backup_path: Path, args: argparse.Namespace) -> bool:
-    """Restore from a backup file"""
+    """バックアップファイルから復元"""
     logger = get_logger()
     
     try:
         if not backup_path.exists():
-            logger.error(f"Backup file not found: {backup_path}")
+            logger.error(f"バックアップファイルが見つかりません: {backup_path}")
             return False
         
-        # Check backup file
+        # バックアップファイルを確認
         info = get_backup_info(backup_path)
         if "error" in info:
-            logger.error(f"Invalid backup file: {info['error']}")
+            logger.error(f"無効なバックアップファイルです: {info['error']}")
             return False
         
-        logger.info(f"Restoring from backup: {backup_path}")
+        logger.info(f"バックアップから復元中: {backup_path}")
         
-        # Determine compression
+        # 圧縮を決定
         if backup_path.suffix == ".gz":
             mode = "r:gz"
         elif backup_path.suffix == ".bz2":
@@ -370,17 +370,17 @@ def restore_backup(backup_path: Path, args: argparse.Namespace) -> bool:
         else:
             mode = "r"
         
-        # Create backup of current installation if it exists
+        # 現在のインストールが存在する場合、バックアップを作成
         if check_installation_exists(args.install_dir) and not args.dry_run:
-            logger.info("Creating backup of current installation before restore")
-            # This would call create_backup internally
+            logger.info("復元前に現在のインストールのバックアップを作成中")
+            # これは内部的にcreate_backupを呼び出す
         
-        # Extract backup
+        # バックアップを展開
         start_time = time.time()
         files_restored = 0
         
         with tarfile.open(backup_path, mode) as tar:
-            # Extract all files except metadata
+            # メタデータを除くすべてのファイルを展開
             for member in tar.getmembers():
                 if member.name == "backup_metadata.json":
                     continue
@@ -388,50 +388,50 @@ def restore_backup(backup_path: Path, args: argparse.Namespace) -> bool:
                 try:
                     target_path = args.install_dir / member.name
                     
-                    # Check if file exists and overwrite flag
+                    # ファイルが存在し、上書きフラグが立っているか確認
                     if target_path.exists() and not args.overwrite:
-                        logger.warning(f"Skipping existing file: {target_path}")
+                        logger.warning(f"既存のファイルをスキップ: {target_path}")
                         continue
                     
-                    # Extract file
+                    # ファイルを展開
                     tar.extract(member, args.install_dir)
                     files_restored += 1
                     
                     if files_restored % 10 == 0:
-                        logger.debug(f"Restored {files_restored} files")
+                        logger.debug(f"{files_restored}個のファイルを復元しました")
                         
                 except Exception as e:
-                    logger.warning(f"Could not restore {member.name}: {e}")
+                    logger.warning(f"{member.name}を復元できませんでした: {e}")
         
         duration = time.time() - start_time
         
-        logger.success(f"Restore completed successfully in {duration:.1f} seconds")
-        logger.info(f"Files restored: {files_restored}")
+        logger.success(f"復元は{duration:.1f}秒で正常に完了しました")
+        logger.info(f"復元されたファイル数: {files_restored}")
         
         return True
         
     except Exception as e:
-        logger.exception(f"Failed to restore backup: {e}")
+        logger.exception(f"バックアップの復元に失敗しました: {e}")
         return False
 
 
 def interactive_restore_selection(backups: List[Dict[str, Any]]) -> Optional[Path]:
-    """Interactive backup selection for restore"""
+    """復元のための対話型バックアップ選択"""
     if not backups:
-        print(f"{Colors.YELLOW}No backups available for restore{Colors.RESET}")
+        print(f"{Colors.YELLOW}復元可能なバックアップがありません{Colors.RESET}")
         return None
     
-    print(f"\n{Colors.CYAN}Select Backup to Restore:{Colors.RESET}")
+    print(f"\n{Colors.CYAN}復元するバックアップを選択:{Colors.RESET}")
     
-    # Create menu options
+    # メニューオプションを作成
     backup_options = []
     for backup in backups:
         name = backup["path"].name
-        size = format_size(backup["size"]) if backup["size"] > 0 else "unknown"
-        created = backup["created"].strftime("%Y-%m-%d %H:%M") if backup["created"] else "unknown"
+        size = format_size(backup["size"]) if backup["size"] > 0 else "不明"
+        created = backup["created"].strftime("%Y-%m-%d %H:%M") if backup["created"] else "不明"
         backup_options.append(f"{name} ({size}, {created})")
     
-    menu = Menu("Select backup:", backup_options)
+    menu = Menu("バックアップを選択:", backup_options)
     choice = menu.display()
     
     if choice == -1 or choice >= len(backups):
@@ -441,87 +441,88 @@ def interactive_restore_selection(backups: List[Dict[str, Any]]) -> Optional[Pat
 
 
 def cleanup_old_backups(backup_dir: Path, args: argparse.Namespace) -> bool:
-    """Clean up old backup files"""
+    """古いバックアップファイルをクリーンアップ"""
     logger = get_logger()
     
     try:
         backups = list_backups(backup_dir)
         if not backups:
-            logger.info("No backups found to clean up")
+            logger.info("クリーンアップするバックアップが見つかりません")
             return True
         
         to_remove = []
         
-        # Remove by age
+        # 古いものを削除
         if args.older_than:
+            from datetime import timedelta
             cutoff_date = datetime.now() - timedelta(days=args.older_than)
             for backup in backups:
                 if backup["created"] and backup["created"] < cutoff_date:
                     to_remove.append(backup)
         
-        # Keep only N most recent
+        # 最新N個のみ保持
         if args.keep and len(backups) > args.keep:
-            # Sort by date and take oldest ones to remove
+            # 日付でソートし、最も古いものを削除対象にする
             backups.sort(key=lambda x: x.get("created", datetime.min), reverse=True)
             to_remove.extend(backups[args.keep:])
         
-        # Remove duplicates
+        # 重複を削除
         to_remove = list({backup["path"]: backup for backup in to_remove}.values())
         
         if not to_remove:
-            logger.info("No backups need to be cleaned up")
+            logger.info("クリーンアップが必要なバックアップはありません")
             return True
         
-        logger.info(f"Cleaning up {len(to_remove)} old backups")
+        logger.info(f"{len(to_remove)}個の古いバックアップをクリーンアップ中")
         
         for backup in to_remove:
             try:
                 backup["path"].unlink()
-                logger.info(f"Removed backup: {backup['path'].name}")
+                logger.info(f"削除されたバックアップ: {backup['path'].name}")
             except Exception as e:
-                logger.warning(f"Could not remove {backup['path'].name}: {e}")
+                logger.warning(f"{backup['path'].name}を削除できませんでした: {e}")
         
         return True
         
     except Exception as e:
-        logger.exception(f"Failed to cleanup backups: {e}")
+        logger.exception(f"バックアップのクリーンアップに失敗しました: {e}")
         return False
 
 
 def run(args: argparse.Namespace) -> int:
-    """Execute backup operation with parsed arguments"""
+    """解析された引数でバックアップ操作を実行"""
     operation = BackupOperation()
     operation.setup_operation_logging(args)
     logger = get_logger()
-    # ✅ Inserted validation code
+    # ✅ 挿入された検証コード
     expected_home = Path.home().resolve()
     actual_dir = args.install_dir.resolve()
 
     if not str(actual_dir).startswith(str(expected_home)):
-        print(f"\n[✗] Installation must be inside your user profile directory.")
-        print(f"    Expected prefix: {expected_home}")
-        print(f"    Provided path:   {actual_dir}")
+        print(f"\n[✗] インストールはユーザープロファイルディレクトリ内で行う必要があります。")
+        print(f"    期待されるプレフィックス: {expected_home}")
+        print(f"    指定されたパス:   {actual_dir}")
         sys.exit(1)
     
     try:
-        # Validate global arguments
+        # グローバル引数を検証
         success, errors = operation.validate_global_args(args)
         if not success:
             for error in errors:
                 logger.error(error)
             return 1
         
-        # Display header
+        # ヘッダーを表示
         if not args.quiet:
             from setup.cli.base import __version__
             display_header(
-                f"SuperClaude Backup v{__version__}",
-                "Backup and restore SuperClaude installations"
+                f"SuperClaude バックアップ v{__version__}",
+                "SuperClaudeのインストールをバックアップおよび復元"
             )
         
         backup_dir = get_backup_directory(args)
         
-        # Handle different backup operations
+        # さまざまなバックアップ操作を処理
         if args.create:
             success = create_backup(args)
             
@@ -532,14 +533,14 @@ def run(args: argparse.Namespace) -> int:
             
         elif args.restore:
             if args.restore == "interactive":
-                # Interactive restore
+                # 対話的な復元
                 backups = list_backups(backup_dir)
                 backup_path = interactive_restore_selection(backups)
                 if not backup_path:
-                    logger.info("Restore cancelled by user")
+                    logger.info("ユーザーによって復元がキャンセルされました")
                     return 0
             else:
-                # Specific backup file
+                # 特定のバックアップファイル
                 backup_path = Path(args.restore)
                 if not backup_path.is_absolute():
                     backup_path = backup_dir / backup_path
@@ -553,21 +554,21 @@ def run(args: argparse.Namespace) -> int:
             
             info = get_backup_info(backup_path)
             if info["exists"]:
-                print(f"\n{Colors.CYAN}Backup Information:{Colors.RESET}")
-                print(f"File: {info['path']}")
-                print(f"Size: {format_size(info['size'])}")
-                print(f"Created: {info['created']}")
-                print(f"Files: {info.get('files', 'unknown')}")
+                print(f"\n{Colors.CYAN}バックアップ情報:{Colors.RESET}")
+                print(f"ファイル: {info['path']}")
+                print(f"サイズ: {format_size(info['size'])}")
+                print(f"作成日時: {info['created']}")
+                print(f"ファイル数: {info.get('files', '不明')}")
                 
                 if info["metadata"]:
                     metadata = info["metadata"]
-                    print(f"Framework Version: {metadata.get('framework_version', 'unknown')}")
+                    print(f"フレームワークバージョン: {metadata.get('framework_version', '不明')}")
                     if metadata.get("components"):
-                        print("Components:")
+                        print("コンポーネント:")
                         for comp, ver in metadata["components"].items():
                             print(f"  {comp}: v{ver}")
             else:
-                logger.error(f"Backup file not found: {backup_path}")
+                logger.error(f"バックアップファイルが見つかりません: {backup_path}")
                 success = False
             success = True
             
@@ -575,21 +576,21 @@ def run(args: argparse.Namespace) -> int:
             success = cleanup_old_backups(backup_dir, args)
         
         else:
-            logger.error("No backup operation specified")
+            logger.error("バックアップ操作が指定されていません")
             success = False
         
         if success:
             if not args.quiet and args.create:
-                display_success("Backup operation completed successfully!")
+                display_success("バックアップ操作が正常に完了しました！")
             elif not args.quiet and args.restore:
-                display_success("Restore operation completed successfully!")
+                display_success("復元操作が正常に完了しました！")
             return 0
         else:
-            display_error("Backup operation failed. Check logs for details.")
+            display_error("バックアップ操作に失敗しました。詳細はログを確認してください。")
             return 1
             
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Backup operation cancelled by user{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}ユーザーによってバックアップ操作がキャンセルされました{Colors.RESET}")
         return 130
     except Exception as e:
         return operation.handle_operation_error("backup", e)

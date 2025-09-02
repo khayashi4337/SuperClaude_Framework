@@ -1,5 +1,5 @@
 """
-Abstract base class for installable components
+インストール可能なコンポーネントの抽象基底クラス
 """
 
 from abc import ABC, abstractmethod
@@ -13,7 +13,7 @@ from ..utils.security import SecurityValidator
 
 
 class Component(ABC):
-    """Base class for all installable components"""
+    """すべてのインストール可能なコンポーネントの基底クラス"""
     
     def __init__(self, install_dir: Optional[Path] = None, component_subdir: Path = Path('')):
         """
@@ -35,30 +35,30 @@ class Component(ABC):
     @abstractmethod
     def get_metadata(self) -> Dict[str, str]:
         """
-        Return component metadata
+        コンポーネントのメタデータを返します
         
         Returns:
-            Dict containing:
-                - name: Component name
-                - version: Component version
-                - description: Component description
-                - category: Component category (core, command, integration, etc.)
+            以下を含む辞書:
+                - name: コンポーネント名
+                - version: コンポーネントバージョン
+                - description: コンポーネントの説明
+                - category: コンポーネントカテゴリ (core, command, integration, etc.)
         """
         pass
     
     def validate_prerequisites(self, installSubPath: Optional[Path] = None) -> Tuple[bool, List[str]]:
         """
-        Check prerequisites for this component
+        このコンポーネントの前提条件を確認します
         
         Returns:
-            Tuple of (success: bool, error_messages: List[str])
+            (成功: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
 
         # Check if we have read access to source files
         source_dir = self._get_source_dir()
         if not source_dir or (source_dir and not source_dir.exists()):
-            errors.append(f"Source directory not found: {source_dir}")
+            errors.append(f"ソースディレクトリが見つかりません: {source_dir}")
             return False, errors
 
         # Check if all required framework files exist
@@ -69,14 +69,14 @@ class Component(ABC):
                 missing_files.append(filename)
 
         if missing_files:
-            errors.append(f"Missing component files: {missing_files}")
+            errors.append(f"コンポーネントファイルが見つかりません: {missing_files}")
 
         # Check write permissions to install directory
         has_perms, missing = SecurityValidator.check_permissions(
             self.install_dir, {'write'}
         )
         if not has_perms:
-            errors.append(f"No write permissions to {self.install_dir}: {missing}")
+            errors.append(f"{self.install_dir}への書き込み権限がありません: {missing}")
 
         # Validate installation target
         is_safe, validation_errors = SecurityValidator.validate_installation_target(self.install_component_subdir)
@@ -94,16 +94,16 @@ class Component(ABC):
             errors.extend(security_errors)
 
         if not self.file_manager.ensure_directory(self.install_component_subdir):
-            errors.append(f"Could not create install directory: {self.install_component_subdir}")
+            errors.append(f"インストールディレクトリを作成できませんでした: {self.install_component_subdir}")
 
         return len(errors) == 0, errors
     
     def get_files_to_install(self) -> List[Tuple[Path, Path]]:
         """
-        Return list of files to install
+        インストールするファイルのリストを返します
         
         Returns:
-            List of tuples (source_path, target_path)
+            (ソースパス, ターゲットパス)のタプルのリスト
         """
         source_dir = self._get_source_dir()
         files = []
@@ -131,19 +131,19 @@ class Component(ABC):
         try:
             return self._install(config)
         except Exception as e:
-            self.logger.exception(f"Unexpected error during {repr(self)} installation: {e}")
+            self.logger.exception(f"{repr(self)}のインストール中に予期しないエラーが発生しました: {e}")
             return False
 
     @abstractmethod
     def _install(self, config: Dict[str, Any]) -> bool:
         """
-        Perform component-specific installation logic
+        コンポーネント固有のインストールロジックを実行します
         
         Args:
-            config: Installation configuration
+            config: インストール設定
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         # Validate installation
         success, errors = self.validate_prerequisites()
@@ -158,19 +158,19 @@ class Component(ABC):
         # Copy framework files
         success_count = 0
         for source, target in files_to_install:
-            self.logger.debug(f"Copying {source.name} to {target}")
+            self.logger.debug(f"{source.name} を {target} にコピー中")
 
             if self.file_manager.copy_file(source, target):
                 success_count += 1
-                self.logger.debug(f"Successfully copied {source.name}")
+                self.logger.debug(f"{source.name}のコピーに成功しました")
             else:
-                self.logger.error(f"Failed to copy {source.name}")
+                self.logger.error(f"{source.name}のコピーに失敗しました")
 
         if success_count != len(files_to_install):
-            self.logger.error(f"Only {success_count}/{len(files_to_install)} files copied successfully")
+            self.logger.error(f"{len(files_to_install)}個のファイルのうち{success_count}個のみ正常にコピーされました")
             return False
 
-        self.logger.success(f"{repr(self)} component installed successfully ({success_count} files)")
+        self.logger.success(f"{repr(self)}コンポーネントが正常にインストールされました（{success_count}個のファイル）")
 
         return self._post_install()
 
@@ -183,37 +183,37 @@ class Component(ABC):
     @abstractmethod
     def uninstall(self) -> bool:
         """
-        Remove component
+        コンポーネントを削除します
         
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         pass
     
     @abstractmethod
     def get_dependencies(self) -> List[str]:
         """
-        Return list of component dependencies
+        コンポーネントの依存関係リストを返します
         
         Returns:
-            List of component names this component depends on
+            このコンポーネントが依存するコンポーネント名のリスト
         """
         pass
 
     @abstractmethod
     def _get_source_dir(self) -> Optional[Path]:
-        """Get source directory for component files"""
+        """コンポーネントファイルのソースディレクトリを取得"""
         pass
     
     def update(self, config: Dict[str, Any]) -> bool:
         """
-        Update component (default: uninstall then install)
+        コンポーネントを更新します (デフォルト: アンインストールしてからインストール)
         
         Args:
-            config: Installation configuration
+            config: インストール設定
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         # Default implementation: uninstall and reinstall
         if self.uninstall():
@@ -222,63 +222,63 @@ class Component(ABC):
     
     def get_installed_version(self) -> Optional[str]:
         """
-        Get currently installed version of component
+        現在インストールされているコンポーネントのバージョンを取得します
         
         Returns:
-            Version string if installed, None otherwise
+            インストールされている場合はバージョン文字列、それ以外はNone
         """
-        self.logger.debug("Checking installed version")
+        self.logger.debug("インストール済みバージョンの確認")
         metadata_file = self.install_dir / ".superclaude-metadata.json"
         if metadata_file.exists():
-            self.logger.debug("Metadata file exists, reading version")
+            self.logger.debug("メタデータファイルが存在するため、バージョンを読み取り中")
             try:
                 with open(metadata_file, 'r') as f:
                     metadata = json.load(f)
                 component_name = self.get_metadata()['name']
                 version = metadata.get('components', {}).get(component_name, {}).get('version')
-                self.logger.debug(f"Found version: {version}")
+                self.logger.debug(f"バージョンが見つかりました: {version}")
                 return version
             except Exception as e:
-                self.logger.warning(f"Failed to read version from metadata: {e}")
+                self.logger.warning(f"メタデータからバージョンを読み取れませんでした: {e}")
         else:
-            self.logger.debug("Metadata file does not exist")
+            self.logger.debug("メタデータファイルが存在しません")
         return None
     
     def is_installed(self) -> bool:
         """
-        Check if component is installed
+        コンポーネントがインストールされているか確認します
         
         Returns:
-            True if installed, False otherwise
+            インストールされている場合はTrue、それ以外はFalse
         """
         return self.get_installed_version() is not None
     
     def validate_installation(self) -> Tuple[bool, List[str]]:
         """
-        Validate that component is correctly installed
+        コンポーネントが正しくインストールされていることを検証します
         
         Returns:
-            Tuple of (success: bool, error_messages: List[str])
+            (成功: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
         
         # Check if all files exist
         for _, target in self.get_files_to_install():
             if not target.exists():
-                errors.append(f"Missing file: {target}")
+                errors.append(f"ファイルが見つかりません: {target}")
         
         # Check version in metadata
         if not self.get_installed_version():
-            errors.append("Component not registered in .superclaude-metadata.json")
+            errors.append("コンポーネントが.superclaude-metadata.jsonに登録されていません")
         
         return len(errors) == 0, errors
     
     def get_size_estimate(self) -> int:
         """
-        Estimate installed size in bytes
+        インストールサイズをバイト単位で推定します
         
         Returns:
-            Estimated size in bytes
+            推定サイズ（バイト）
         """
         total_size = 0
         for source, _ in self.get_files_to_install():
@@ -291,10 +291,10 @@ class Component(ABC):
 
     def _discover_component_files(self) -> List[str]:
         """
-        Dynamically discover framework .md files in the Core directory
+        Coreディレクトリ内のフレームワーク.mdファイルを動的に検出します
 
         Returns:
-            List of framework filenames (e.g., ['CLAUDE.md', 'COMMANDS.md', ...])
+            フレームワークファイル名のリスト (例: ['CLAUDE.md', 'COMMANDS.md', ...])
         """
         source_dir = self._get_source_dir()
 
@@ -310,26 +310,26 @@ class Component(ABC):
     def _discover_files_in_directory(self, directory: Path, extension: str = '.md',
                                    exclude_patterns: Optional[List[str]] = None) -> List[str]:
         """
-        Shared utility for discovering files in a directory
+        ディレクトリ内のファイルを検出するための共有ユーティリティ
 
         Args:
-            directory: Directory to scan
-            extension: File extension to look for (default: '.md')
-            exclude_patterns: List of filename patterns to exclude
+            directory: スキャンするディレクトリ
+            extension: 検索するファイル拡張子 (デフォルト: '.md')
+            exclude_patterns: 除外するファイル名パターンのリスト
 
         Returns:
-            List of filenames found in the directory
+            ディレクトリ内で見つかったファイル名のリスト
         """
         if exclude_patterns is None:
             exclude_patterns = []
 
         try:
             if not directory.exists():
-                self.logger.warning(f"Source directory not found: {directory}")
+                self.logger.warning(f"ソースディレクトリが見つかりません: {directory}")
                 return []
 
             if not directory.is_dir():
-                self.logger.warning(f"Source path is not a directory: {directory}")
+                self.logger.warning(f"ソースパスはディレクトリではありません: {directory}")
                 return []
 
             # Discover files with the specified extension
@@ -343,40 +343,40 @@ class Component(ABC):
             # Sort for consistent ordering
             files.sort()
 
-            self.logger.debug(f"Discovered {len(files)} {extension} files in {directory}")
+            self.logger.debug(f"{directory}で{len(files)}個の{extension}ファイルを発見しました")
             if files:
-                self.logger.debug(f"Files found: {files}")
+                self.logger.debug(f"見つかったファイル: {files}")
 
             return files
 
         except PermissionError:
-            self.logger.error(f"Permission denied accessing directory: {directory}")
+            self.logger.error(f"ディレクトリへのアクセスが拒否されました: {directory}")
             return []
         except Exception as e:
-            self.logger.error(f"Error discovering files in {directory}: {e}")
+            self.logger.error(f"{directory}でのファイル発見中にエラーが発生しました: {e}")
             return []
     
     def __str__(self) -> str:
-        """String representation of component"""
+        """コンポーネントの文字列表現"""
         metadata = self.get_metadata()
         return f"{metadata['name']} v{metadata['version']}"
     
     def __repr__(self) -> str:
-        """Developer representation of component"""
+        """コンポーネントの開発者向け表現"""
         return f"<{self.__class__.__name__}({self.get_metadata()['name']})>"
     
     def _resolve_path_safely(self, path: Path) -> Path:
         """
-        Safely resolve path with proper error handling and security validation
+        適切なエラー処理とセキュリティ検証で安全にパスを解決します
         
         Args:
-            path: Path to resolve
+            path: 解決するパス
             
         Returns:
-            Resolved path
+            解決されたパス
             
         Raises:
-            ValueError: If path resolution fails or path is unsafe
+            ValueError: パスの解決に失敗した場合、またはパスが安全でない場合
         """
         try:
             # Expand user directory (~) and resolve path
@@ -394,28 +394,28 @@ class Component(ABC):
             
             # Allow temporary directories for testing
             if path_str.startswith('/tmp/') or 'temp' in path_str:
-                self.logger.debug(f"Allowing temporary directory: {resolved_path}")
+                self.logger.debug(f"一時ディレクトリを許可しています: {resolved_path}")
                 return resolved_path
             
             for pattern in dangerous_patterns:
                 if path_str.startswith(pattern):
-                    raise ValueError(f"Cannot use system directory: {resolved_path}")
+                    raise ValueError(f"システムディレクトリは使用できません: {resolved_path}")
             
             return resolved_path
             
         except Exception as e:
-            self.logger.error(f"Failed to resolve path {path}: {e}")
-            raise ValueError(f"Invalid path: {path}")
+            self.logger.error(f"パスの解決に失敗しました {path}: {e}")
+            raise ValueError(f"無効なパスです: {path}")
     
     def _resolve_source_path_safely(self, path: Path) -> Optional[Path]:
         """
-        Safely resolve source path with existence check
+        存在チェック付きで安全にソースパスを解決します
         
         Args:
-            path: Source path to resolve
+            path: 解決するソースパス
             
         Returns:
-            Resolved path if valid and exists, None otherwise
+            有効で存在する場合は解決されたパス、それ以外はNone
         """
         try:
             resolved_path = self._resolve_path_safely(path)

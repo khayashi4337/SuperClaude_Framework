@@ -1,5 +1,5 @@
 """
-System validation for SuperClaude installation requirements
+SuperClaudeインストール要件のシステム検証
 """
 
 import subprocess
@@ -51,22 +51,22 @@ except ImportError:
 
 
 class Validator:
-    """System requirements validator"""
+    """システム要件バリデーター"""
     
     def __init__(self):
-        """Initialize validator"""
+        """バリデーターを初期化"""
         self.validation_cache: Dict[str, Any] = {}
     
     def check_python(self, min_version: str = "3.8", max_version: Optional[str] = None) -> Tuple[bool, str]:
         """
-        Check Python version requirements
+        Pythonのバージョン要件を確認します
         
         Args:
-            min_version: Minimum required Python version
-            max_version: Maximum supported Python version (optional)
+            min_version: 必須の最小Pythonバージョン
+            max_version: サポートされる最大Pythonバージョン（オプション）
             
         Returns:
-            Tuple of (success: bool, message: str)
+            (成功: bool, メッセージ: str)のタプル
         """
         cache_key = f"python_{min_version}_{max_version}"
         if cache_key in self.validation_cache:
@@ -79,22 +79,22 @@ class Validator:
             # Check minimum version
             if version.parse(current_version) < version.parse(min_version):
                 help_msg = self.get_installation_help("python")
-                result = (False, f"Python {min_version}+ required, found {current_version}{help_msg}")
+                result = (False, f"Python {min_version}+ が必要、見つかったのは {current_version}{help_msg}")
                 self.validation_cache[cache_key] = result
                 return result
             
             # Check maximum version if specified
             if max_version and version.parse(current_version) > version.parse(max_version):
-                result = (False, f"Python version {current_version} exceeds maximum supported {max_version}")
+                result = (False, f"Pythonバージョン {current_version} はサポートされている最大値を超えています {max_version}")
                 self.validation_cache[cache_key] = result
                 return result
             
-            result = (True, f"Python {current_version} meets requirements")
+            result = (True, f"Python {current_version} は要件を満たしています")
             self.validation_cache[cache_key] = result
             return result
             
         except Exception as e:
-            result = (False, f"Could not check Python version: {e}")
+            result = (False, f"Pythonのバージョンを確認できませんでした: {e}")
             self.validation_cache[cache_key] = result
             return result
     
@@ -125,7 +125,7 @@ class Validator:
             
             if result.returncode != 0:
                 help_msg = self.get_installation_help("node")
-                result_tuple = (False, f"Node.js not found in PATH{help_msg}")
+                result_tuple = (False, f"Node.js がPATHに見つかりません{help_msg}")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
@@ -139,43 +139,43 @@ class Validator:
             # Check minimum version
             if version.parse(current_version) < version.parse(min_version):
                 help_msg = self.get_installation_help("node")
-                result_tuple = (False, f"Node.js {min_version}+ required, found {current_version}{help_msg}")
+                result_tuple = (False, f"Node.js {min_version}+ が必要、見つかったのは {current_version}{help_msg}")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
             # Check maximum version if specified
             if max_version and version.parse(current_version) > version.parse(max_version):
-                result_tuple = (False, f"Node.js version {current_version} exceeds maximum supported {max_version}")
+                result_tuple = (False, f"Node.js version {current_version} はサポートされている最大値を超えています {max_version}")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
-            result_tuple = (True, f"Node.js {current_version} meets requirements")
+            result_tuple = (True, f"Node.js {current_version} は要件を満たしています")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
             
         except subprocess.TimeoutExpired:
-            result_tuple = (False, "Node.js version check timed out")
+            result_tuple = (False, "Node.js version のチェックがタイムアウトしました")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except FileNotFoundError:
             help_msg = self.get_installation_help("node")
-            result_tuple = (False, f"Node.js not found in PATH{help_msg}")
+            result_tuple = (False, f"Node.js がPATHに見つかりません{help_msg}")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except Exception as e:
-            result_tuple = (False, f"Could not check Node.js version: {e}")
+            result_tuple = (False, f"確認できませんでした Node.js version: {e}")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
     
     def check_claude_cli(self, min_version: Optional[str] = None) -> Tuple[bool, str]:
         """
-        Check Claude CLI installation and version
+        Claude CLIのインストールとバージョンを確認します
         
         Args:
-            min_version: Minimum required Claude CLI version (optional)
+            min_version: 必須の最小Claude CLIバージョン（オプション）
             
         Returns:
-            Tuple of (success: bool, message: str)
+            (成功: bool, メッセージ: str)のタプル
         """
         cache_key = f"claude_cli_{min_version}"
         if cache_key in self.validation_cache:
@@ -193,7 +193,7 @@ class Validator:
             
             if result.returncode != 0:
                 help_msg = self.get_installation_help("claude_cli")
-                result_tuple = (False, f"Claude CLI not found in PATH{help_msg}")
+                result_tuple = (False, f"Claude CLIがPATHに見つかりません{help_msg}")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
@@ -202,7 +202,7 @@ class Validator:
             version_match = re.search(r'(\d+\.\d+\.\d+)', version_output)
             
             if not version_match:
-                result_tuple = (True, "Claude CLI found (version format unknown)")
+                result_tuple = (True, "Claude CLIが見つかりました (バージョン形式不明)")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
@@ -210,7 +210,7 @@ class Validator:
             
             # Check minimum version if specified
             if min_version and version.parse(current_version) < version.parse(min_version):
-                result_tuple = (False, f"Claude CLI {min_version}+ required, found {current_version}")
+                result_tuple = (False, f"Claude CLI {min_version}+ が必要、見つかったのは {current_version}")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
@@ -219,30 +219,30 @@ class Validator:
             return result_tuple
             
         except subprocess.TimeoutExpired:
-            result_tuple = (False, "Claude CLI version check timed out")
+            result_tuple = (False, "Claude CLIのバージョンチェックがタイムアウトしました")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except FileNotFoundError:
             help_msg = self.get_installation_help("claude_cli")
-            result_tuple = (False, f"Claude CLI not found in PATH{help_msg}")
+            result_tuple = (False, f"Claude CLIがPATHに見つかりません{help_msg}")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except Exception as e:
-            result_tuple = (False, f"Could not check Claude CLI: {e}")
+            result_tuple = (False, f"Claude CLIを確認できませんでした: {e}")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
     
     def check_external_tool(self, tool_name: str, command: str, min_version: Optional[str] = None) -> Tuple[bool, str]:
         """
-        Check external tool availability and version
+        外部ツールの利用可能性とバージョンを確認します
         
         Args:
-            tool_name: Display name of tool
-            command: Command to check version
-            min_version: Minimum required version (optional)
+            tool_name: ツールの表示名
+            command: バージョンを確認するコマンド
+            min_version: 必須の最小バージョン（オプション）
             
         Returns:
-            Tuple of (success: bool, message: str)
+            (成功: bool, メッセージ: str)のタプル
         """
         cache_key = f"tool_{tool_name}_{command}_{min_version}"
         if cache_key in self.validation_cache:
@@ -261,7 +261,7 @@ class Validator:
             )
             
             if result.returncode != 0:
-                result_tuple = (False, f"{tool_name} not found or command failed")
+                result_tuple = (False, f"{tool_name} が見つからないか、コマンドが失敗しました")
                 self.validation_cache[cache_key] = result_tuple
                 return result_tuple
             
@@ -274,7 +274,7 @@ class Validator:
                     current_version = version_match.group(1)
                     
                     if version.parse(current_version) < version.parse(min_version):
-                        result_tuple = (False, f"{tool_name} {min_version}+ required, found {current_version}")
+                        result_tuple = (False, f"{tool_name} {min_version}+ が必要、見つかったのは {current_version}")
                         self.validation_cache[cache_key] = result_tuple
                         return result_tuple
                     
@@ -282,7 +282,7 @@ class Validator:
                     self.validation_cache[cache_key] = result_tuple
                     return result_tuple
                 else:
-                    result_tuple = (True, f"{tool_name} found (version unknown)")
+                    result_tuple = (True, f"{tool_name} が見つかりました (バージョン不明)")
                     self.validation_cache[cache_key] = result_tuple
                     return result_tuple
             else:
@@ -291,28 +291,28 @@ class Validator:
                 return result_tuple
                 
         except subprocess.TimeoutExpired:
-            result_tuple = (False, f"{tool_name} check timed out")
+            result_tuple = (False, f"{tool_name} のチェックがタイムアウトしました")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except FileNotFoundError:
-            result_tuple = (False, f"{tool_name} not found in PATH")
+            result_tuple = (False, f"{tool_name} がPATHに見つかりません")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
         except Exception as e:
-            result_tuple = (False, f"Could not check {tool_name}: {e}")
+            result_tuple = (False, f"確認できませんでした {tool_name}: {e}")
             self.validation_cache[cache_key] = result_tuple
             return result_tuple
     
     def check_disk_space(self, path: Path, required_mb: int = 500) -> Tuple[bool, str]:
         """
-        Check available disk space
+        利用可能なディスク容量を確認します
         
         Args:
-            path: Path to check (file or directory)
-            required_mb: Required free space in MB
+            path: 確認するパス（ファイルまたはディレクトリ）
+            required_mb: 必要な空き容量（MB）
             
         Returns:
-            Tuple of (success: bool, message: str)
+            (成功: bool, メッセージ: str)のタプル
         """
         cache_key = f"disk_{path}_{required_mb}"
         if cache_key in self.validation_cache:
@@ -327,27 +327,27 @@ class Validator:
             free_mb = stat_result.free / (1024 * 1024)
             
             if free_mb < required_mb:
-                result = (False, f"Insufficient disk space: {free_mb:.1f}MB free, {required_mb}MB required")
+                result = (False, f"ディスク容量が不足しています: {free_mb:.1f}MBの空き, {required_mb}MBが必要")
             else:
-                result = (True, f"Sufficient disk space: {free_mb:.1f}MB free")
+                result = (True, f"十分なディスク容量: {free_mb:.1f}MB free")
             
             self.validation_cache[cache_key] = result
             return result
             
         except Exception as e:
-            result = (False, f"Could not check disk space: {e}")
+            result = (False, f"ディスク容量を確認できませんでした: {e}")
             self.validation_cache[cache_key] = result
             return result
     
     def check_write_permissions(self, path: Path) -> Tuple[bool, str]:
         """
-        Check write permissions for path
+        パスの書き込み権限を確認します
         
         Args:
-            path: Path to check
+            path: 確認するパス
             
         Returns:
-            Tuple of (success: bool, message: str)
+            (成功: bool, メッセージ: str)のタプル
         """
         cache_key = f"write_{path}"
         if cache_key in self.validation_cache:
@@ -363,24 +363,24 @@ class Validator:
             test_file.touch()
             test_file.unlink()
             
-            result = (True, f"Write access confirmed for {path}")
+            result = (True, f"書き込みアクセス権が確認されました: {path}")
             self.validation_cache[cache_key] = result
             return result
             
         except Exception as e:
-            result = (False, f"No write access to {path}: {e}")
+            result = (False, f"書き込みアクセス権がありません: {path}: {e}")
             self.validation_cache[cache_key] = result
             return result
     
     def validate_requirements(self, requirements: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """
-        Validate all system requirements
+        すべてのシステム要件を検証します
         
         Args:
-            requirements: Requirements configuration dict
+            requirements: 要件設定の辞書
             
         Returns:
-            Tuple of (all_passed: bool, error_messages: List[str])
+            (すべて合格: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
         
@@ -432,14 +432,14 @@ class Validator:
     
     def validate_component_requirements(self, component_names: List[str], all_requirements: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """
-        Validate requirements for specific components
+        特定のコンポーネントの要件を検証します
         
         Args:
-            component_names: List of component names to validate
-            all_requirements: Full requirements configuration
+            component_names: 検証するコンポーネント名のリスト
+            all_requirements: 完全な要件設定
             
         Returns:
-            Tuple of (all_passed: bool, error_messages: List[str])
+            (すべて合格: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
         
@@ -479,10 +479,10 @@ class Validator:
     
     def get_system_info(self) -> Dict[str, Any]:
         """
-        Get comprehensive system information
+        包括的なシステム情報を取得します
         
         Returns:
-            Dict with system information
+            システム情報を含む辞書
         """
         info = {
             "platform": sys.platform,
@@ -512,25 +512,25 @@ class Validator:
                 "used_gb": (stat_result.total - stat_result.free) / (1024**3)
             }
         except Exception:
-            info["disk_space"] = {"error": "Could not determine disk space"}
+            info["disk_space"] = {"error": "ディスク容量を特定できませんでした"}
         
         return info
     
     def get_platform(self) -> str:
         """
-        Get current platform for installation commands
+        インストールコマンド用の現在のプラットフォームを取得します
         
         Returns:
-            Platform string (linux, darwin, win32)
+            プラットフォーム文字列 (linux, darwin, win32)
         """
         return sys.platform
     
     def load_installation_commands(self) -> Dict[str, Any]:
         """
-        Load installation commands from requirements configuration
+        要件設定からインストールコマンドを読み込みます
         
         Returns:
-            Installation commands dict
+            インストールコマンドの辞書
         """
         try:
             from ..services.config import ConfigService
@@ -544,14 +544,14 @@ class Validator:
     
     def get_installation_help(self, tool_name: str, platform: Optional[str] = None) -> str:
         """
-        Get installation help for a specific tool
+        特定のツールのインストールヘルプを取得します
         
         Args:
-            tool_name: Name of tool to get help for
-            platform: Target platform (auto-detected if None)
+            tool_name: ヘルプを取得するツールの名前
+            platform: ターゲットプラットフォーム（Noneの場合は自動検出）
             
         Returns:
-            Installation help string
+            インストールヘルプ文字列
         """
         if platform is None:
             platform = self.get_platform()
@@ -560,7 +560,7 @@ class Validator:
         tool_commands = commands.get(tool_name, {})
         
         if not tool_commands:
-            return f"No installation instructions available for {tool_name}"
+            return f"利用可能なインストール手順はありません: {tool_name}"
         
         # Get platform-specific command or fallback to 'all'
         install_cmd = tool_commands.get(platform, tool_commands.get("all", ""))
@@ -570,17 +570,17 @@ class Validator:
             help_text = f"\n💡 Installation Help for {tool_name}:\n"
             if description:
                 help_text += f"   {description}\n"
-            help_text += f"   Command: {install_cmd}\n"
+            help_text += f"   コマンド: {install_cmd}\n"
             return help_text
         
-        return f"No installation instructions available for {tool_name} on {platform}"
+        return f"利用可能なインストール手順はありません: {tool_name} on {platform}"
     
     def diagnose_system(self) -> Dict[str, Any]:
         """
-        Perform comprehensive system diagnostics
+        包括的なシステム診断を実行します
         
         Returns:
-            Diagnostic information dict
+            診断情報の辞書
         """
         diagnostics = {
             "platform": self.get_platform(),
@@ -596,7 +596,7 @@ class Validator:
             "message": python_msg
         }
         if not python_success:
-            diagnostics["issues"].append("Python version issue")
+            diagnostics["issues"].append("Pythonバージョンの問題")
             diagnostics["recommendations"].append(self.get_installation_help("python"))
         
         # Check Node.js
@@ -616,7 +616,7 @@ class Validator:
             "message": claude_msg
         }
         if not claude_success:
-            diagnostics["issues"].append("Claude CLI not found")
+            diagnostics["issues"].append("Claude CLIが見つかりません")
             diagnostics["recommendations"].append(self.get_installation_help("claude_cli"))
         
         # Check disk space
@@ -626,7 +626,7 @@ class Validator:
             "message": disk_msg
         }
         if not disk_success:
-            diagnostics["issues"].append("Insufficient disk space")
+            diagnostics["issues"].append("ディスク容量が不足しています")
         
         # Check common PATH issues
         self._diagnose_path_issues(diagnostics)
@@ -634,13 +634,13 @@ class Validator:
         return diagnostics
     
     def _diagnose_path_issues(self, diagnostics: Dict[str, Any]) -> None:
-        """Add PATH-related diagnostics"""
+        """PATH関連の診断を追加"""
         path_issues = []
         
         # Check if tools are in PATH, with alternatives for some tools
         tool_checks = [
             # For Python, check if either python3 OR python is available
-            (["python3", "python"], "Python (python3 or python)"),
+            (["python3", "python"], "Python (python3 または python)"),
             (["node"], "Node.js"),
             (["npm"], "npm"),
             (["claude"], "Claude CLI")
@@ -666,9 +666,9 @@ class Validator:
             if not tool_found:
                 # Only report as missing if none of the alternatives were found
                 if len(tool_alternatives) > 1:
-                    path_issues.append(f"{display_name} not found in PATH")
+                    path_issues.append(f"{display_name} がPATHに見つかりません")
                 else:
-                    path_issues.append(f"{tool_alternatives[0]} not found in PATH")
+                    path_issues.append(f"{tool_alternatives[0]} がPATHに見つかりません")
         
         if path_issues:
             diagnostics["issues"].extend(path_issues)
@@ -681,5 +681,5 @@ class Validator:
             )
     
     def clear_cache(self) -> None:
-        """Clear validation cache"""
+        """検証キャッシュをクリア"""
         self.validation_cache.clear()

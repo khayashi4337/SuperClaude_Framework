@@ -1,6 +1,6 @@
 """
-Environment variable management for SuperClaude
-Cross-platform utilities for setting up persistent environment variables
+SuperClaudeの環境変数管理
+永続的な環境変数を設定するためのクロスプラットフォームユーティリティ
 """
 
 import os
@@ -15,7 +15,7 @@ from .logger import get_logger
 
 
 def _get_env_tracking_file() -> Path:
-    """Get path to environment variable tracking file"""
+    """環境変数追跡ファイルへのパスを取得"""
     from .. import DEFAULT_INSTALL_DIR
     install_dir = Path.home() / ".claude"
     install_dir.mkdir(exist_ok=True)
@@ -23,7 +23,7 @@ def _get_env_tracking_file() -> Path:
 
 
 def _load_env_tracking() -> Dict[str, Dict[str, str]]:
-    """Load environment variable tracking data"""
+    """環境変数追跡データを読み込み"""
     tracking_file = _get_env_tracking_file()
     
     try:
@@ -31,13 +31,13 @@ def _load_env_tracking() -> Dict[str, Dict[str, str]]:
             with open(tracking_file, 'r') as f:
                 return json.load(f)
     except Exception as e:
-        get_logger().warning(f"Could not load environment tracking: {e}")
+        get_logger().warning(f"環境追跡を読み込めませんでした: {e}")
     
     return {}
 
 
 def _save_env_tracking(tracking_data: Dict[str, Dict[str, str]]) -> bool:
-    """Save environment variable tracking data"""
+    """環境変数追跡データを保存"""
     tracking_file = _get_env_tracking_file()
     
     try:
@@ -45,12 +45,12 @@ def _save_env_tracking(tracking_data: Dict[str, Dict[str, str]]) -> bool:
             json.dump(tracking_data, f, indent=2)
         return True
     except Exception as e:
-        get_logger().error(f"Could not save environment tracking: {e}")
+        get_logger().error(f"環境追跡を保存できませんでした: {e}")
         return False
 
 
 def _add_env_tracking(env_vars: Dict[str, str]) -> None:
-    """Add environment variables to tracking"""
+    """環境変数を追跡に追加"""
     if not env_vars:
         return
     
@@ -65,11 +65,11 @@ def _add_env_tracking(env_vars: Dict[str, str]) -> None:
         }
     
     _save_env_tracking(tracking_data)
-    get_logger().info(f"Added {len(env_vars)} environment variables to tracking")
+    get_logger().info(f"追加済み {len(env_vars)} 環境変数を追跡へ")
 
 
 def _remove_env_tracking(env_vars: list) -> None:
-    """Remove environment variables from tracking"""
+    """環境変数を追跡から削除"""
     if not env_vars:
         return
     
@@ -80,15 +80,15 @@ def _remove_env_tracking(env_vars: list) -> None:
             del tracking_data[env_var]
     
     _save_env_tracking(tracking_data)
-    get_logger().info(f"Removed {len(env_vars)} environment variables from tracking")
+    get_logger().info(f"削除済み {len(env_vars)} 環境変数を追跡から")
 
 
 def detect_shell_config() -> Optional[Path]:
     """
-    Detect user's shell configuration file
+    ユーザーのシェル設定ファイルを検出します
     
     Returns:
-        Path to the shell configuration file, or None if not found
+        シェル設定ファイルへのパス、見つからない場合はNone
     """
     home = Path.home()
     
@@ -110,13 +110,13 @@ def detect_shell_config() -> Optional[Path]:
 
 def setup_environment_variables(api_keys: Dict[str, str]) -> bool:
     """
-    Set up environment variables across platforms
+    プラットフォーム間で環境変数を設定します
     
     Args:
-        api_keys: Dictionary of environment variable names to values
+        api_keys: 環境変数名と値の辞書
         
     Returns:
-        True if all variables were set successfully, False otherwise
+        すべての変数が正常に設定された場合はTrue、それ以外はFalse
     """
     logger = get_logger()
     success = True
@@ -124,7 +124,7 @@ def setup_environment_variables(api_keys: Dict[str, str]) -> bool:
     if not api_keys:
         return True
     
-    print(f"\n{Colors.BLUE}[INFO] Setting up environment variables...{Colors.RESET}")
+    print(f"\n{Colors.BLUE}[情報] 環境変数を設定中...{Colors.RESET}")
     
     for env_var, value in api_keys.items():
         try:
@@ -139,10 +139,10 @@ def setup_environment_variables(api_keys: Dict[str, str]) -> bool:
                     text=True
                 )
                 if result.returncode != 0:
-                    display_warning(f"Could not set {env_var} persistently: {result.stderr.strip()}")
+                    display_warning(f"設定できませんでした {env_var} を永続的に: {result.stderr.strip()}")
                     success = False
                 else:
-                    logger.info(f"Windows environment variable {env_var} set persistently")
+                    logger.info(f"Windows環境変数 {env_var} を永続的に設定")
             else:  # Unix-like systems
                 shell_config = detect_shell_config()
                 
@@ -156,51 +156,51 @@ def setup_environment_variables(api_keys: Dict[str, str]) -> bool:
                     # Check if this environment variable is already set
                     if f'export {env_var}=' in content:
                         # Variable exists - don't duplicate
-                        logger.info(f"Environment variable {env_var} already exists in {shell_config.name}")
+                        logger.info(f"Environment variable {env_var} は既に存在します {shell_config.name}")
                     else:
                         # Append export to shell config
                         with open(shell_config, 'a') as f:
                             f.write(f'\n# SuperClaude API Key\n{export_line}\n')
                         
-                        display_info(f"Added {env_var} to {shell_config.name}")
-                        logger.info(f"Added {env_var} to {shell_config}")
+                        display_info(f"追加済み {env_var} to {shell_config.name}")
+                        logger.info(f"追加済み {env_var} to {shell_config}")
                         
                 except Exception as e:
-                    display_warning(f"Could not update {shell_config.name}: {e}")
+                    display_warning(f"更新できませんでした {shell_config.name}: {e}")
                     success = False
             
-            logger.info(f"Environment variable {env_var} configured for current session")
+            logger.info(f"Environment variable {env_var} が現在のセッション用に設定されました")
             
         except Exception as e:
-            logger.error(f"Failed to set {env_var}: {e}")
-            display_warning(f"Failed to set {env_var}: {e}")
+            logger.error(f"設定に失敗しました {env_var}: {e}")
+            display_warning(f"設定に失敗しました {env_var}: {e}")
             success = False
     
     if success:
         # Add to tracking
         _add_env_tracking(api_keys)
         
-        display_success("Environment variables configured successfully")
+        display_success("環境変数が正常に設定されました")
         if os.name != 'nt':
             display_info("Restart your terminal or run 'source ~/.bashrc' to apply changes")
         else:
-            display_info("New environment variables will be available in new terminal sessions")
+            display_info("新しい環境変数は新しいターミナルセッションで利用可能になります")
     else:
-        display_warning("Some environment variables could not be set persistently")
-        display_info("You can set them manually or check the logs for details")
+        display_warning("一部の環境変数を永続的に設定できませんでした")
+        display_info("手動で設定するか、詳細についてログを確認できます")
     
     return success
 
 
 def validate_environment_setup(env_vars: Dict[str, str]) -> bool:
     """
-    Validate that environment variables are properly set
+    環境変数が正しく設定されていることを検証します
     
     Args:
-        env_vars: Dictionary of environment variable names to expected values
+        env_vars: 環境変数名と期待値の辞書
         
     Returns:
-        True if all variables are set correctly, False otherwise
+        すべての変数が正しく設定されている場合はTrue、それ以外はFalse
     """
     logger = get_logger()
     all_valid = True
@@ -209,23 +209,23 @@ def validate_environment_setup(env_vars: Dict[str, str]) -> bool:
         current_value = os.environ.get(env_var)
         
         if current_value is None:
-            logger.warning(f"Environment variable {env_var} is not set")
+            logger.warning(f"Environment variable {env_var} が設定されていません")
             all_valid = False
         elif current_value != expected_value:
-            logger.warning(f"Environment variable {env_var} has unexpected value")
+            logger.warning(f"Environment variable {env_var} に予期しない値があります")
             all_valid = False
         else:
-            logger.info(f"Environment variable {env_var} is set correctly")
+            logger.info(f"Environment variable {env_var} は正しく設定されています")
     
     return all_valid
 
 
 def get_shell_name() -> str:
     """
-    Get the name of the current shell
+    現在のシェルの名前を取得します
     
     Returns:
-        Name of the shell (e.g., 'bash', 'zsh', 'fish')
+        シェルの名前 (例: 'bash', 'zsh', 'fish')
     """
     shell_path = os.environ.get('SHELL', '')
     if shell_path:
@@ -235,10 +235,10 @@ def get_shell_name() -> str:
 
 def get_superclaude_environment_variables() -> Dict[str, str]:
     """
-    Get environment variables that were set by SuperClaude
+    SuperClaudeによって設定された環境変数を取得します
     
     Returns:
-        Dictionary of environment variable names to their current values
+        環境変数名とその現在の値の辞書
     """
     # Load tracking data to get SuperClaude-managed variables
     tracking_data = _load_env_tracking()
@@ -268,14 +268,14 @@ def get_superclaude_environment_variables() -> Dict[str, str]:
 
 def cleanup_environment_variables(env_vars_to_remove: Dict[str, str], create_restore_script: bool = True) -> bool:
     """
-    Safely remove environment variables with backup and restore options
+    バックアップと復元オプションを使用して環境変数を安全に削除します
     
     Args:
-        env_vars_to_remove: Dictionary of environment variable names to remove
-        create_restore_script: Whether to create a script to restore the variables
+        env_vars_to_remove: 削除する環境変数名の辞書
+        create_restore_script: 変数を復元するスクリプトを作成するかどうか
         
     Returns:
-        True if cleanup was successful, False otherwise
+        クリーンアップが成功した場合はTrue、それ以外はFalse
     """
     logger = get_logger()
     success = True
@@ -287,18 +287,18 @@ def cleanup_environment_variables(env_vars_to_remove: Dict[str, str], create_res
     if create_restore_script:
         restore_script_path = _create_restore_script(env_vars_to_remove)
         if restore_script_path:
-            display_info(f"Created restore script: {restore_script_path}")
+            display_info(f"復元スクリプトを作成しました: {restore_script_path}")
         else:
-            display_warning("Could not create restore script")
+            display_warning("復元スクリプトを作成できませんでした")
     
-    print(f"\n{Colors.BLUE}[INFO] Removing environment variables...{Colors.RESET}")
+    print(f"\n{Colors.BLUE}[情報] 環境変数を削除中...{Colors.RESET}")
     
     for env_var, value in env_vars_to_remove.items():
         try:
-            # Remove from current session
+            # Remove を現在のセッションから
             if env_var in os.environ:
                 del os.environ[env_var]
-                logger.info(f"Removed {env_var} from current session")
+                logger.info(f"削除済み {env_var} を現在のセッションから")
             
             if os.name == 'nt':  # Windows
                 # Remove persistent user variable using reg command
@@ -309,36 +309,36 @@ def cleanup_environment_variables(env_vars_to_remove: Dict[str, str], create_res
                 )
                 if result.returncode != 0:
                     # Variable might not exist in registry, which is fine
-                    logger.debug(f"Registry deletion for {env_var}: {result.stderr.strip()}")
+                    logger.debug(f"レジストリ削除: {env_var}: {result.stderr.strip()}")
                 else:
-                    logger.info(f"Removed {env_var} from Windows registry")
+                    logger.info(f"削除済み {env_var} をWindowsレジストリから")
             else:  # Unix-like systems
                 shell_config = detect_shell_config()
                 if shell_config and shell_config.exists():
                     _remove_env_var_from_shell_config(shell_config, env_var)
                     
         except Exception as e:
-            logger.error(f"Failed to remove {env_var}: {e}")
-            display_warning(f"Could not remove {env_var}: {e}")
+            logger.error(f"削除に失敗しました {env_var}: {e}")
+            display_warning(f"削除できませんでした {env_var}: {e}")
             success = False
     
     if success:
-        # Remove from tracking
+        # Remove から tracking
         _remove_env_tracking(list(env_vars_to_remove.keys()))
         
-        display_success("Environment variables removed successfully")
+        display_success("環境変数が正常に削除されました")
         if os.name != 'nt':
-            display_info("Restart your terminal or source your shell config to apply changes")
+            display_info("変更を適用するには、ターミナルを再起動するか、シェル設定を再読み込みしてください")
         else:
-            display_info("Changes will take effect in new terminal sessions")
+            display_info("変更は新しいターミナルセッションで有効になります")
     else:
-        display_warning("Some environment variables could not be removed")
+        display_warning("一部の環境変数を削除できませんでした")
     
     return success
 
 
 def _create_restore_script(env_vars: Dict[str, str]) -> Optional[Path]:
-    """Create a script to restore environment variables"""
+    """環境変数を復元するスクリプトを作成"""
     try:
         home = Path.home()
         if os.name == 'nt':  # Windows
@@ -370,12 +370,12 @@ def _create_restore_script(env_vars: Dict[str, str]) -> Optional[Path]:
         return script_path
         
     except Exception as e:
-        get_logger().error(f"Failed to create restore script: {e}")
+        get_logger().error(f"復元スクリプトの作成に失敗しました: {e}")
         return None
 
 
 def _remove_env_var_from_shell_config(shell_config: Path, env_var: str) -> bool:
-    """Remove environment variable export from shell configuration file"""
+    """シェル設定ファイルから環境変数エクスポートを削除"""
     try:
         # Read current content
         with open(shell_config, 'r') as f:
@@ -387,7 +387,7 @@ def _remove_env_var_from_shell_config(shell_config: Path, env_var: str) -> bool:
         
         for line in lines:
             # Check if this line exports our variable
-            if f'export {env_var}=' in line or line.strip() == f'# SuperClaude API Key':
+            if f'export {env_var}=' in line or line.strip() == f'# SuperClaude APIキー':
                 skip_next_blank = True
                 continue
             
@@ -403,24 +403,24 @@ def _remove_env_var_from_shell_config(shell_config: Path, env_var: str) -> bool:
         with open(shell_config, 'w') as f:
             f.writelines(filtered_lines)
         
-        get_logger().info(f"Removed {env_var} export from {shell_config.name}")
+        get_logger().info(f"削除済み {env_var} のエクスポート元 {shell_config.name}")
         return True
         
     except Exception as e:
-        get_logger().error(f"Failed to remove {env_var} from {shell_config}: {e}")
+        get_logger().error(f"削除に失敗しました {env_var} から {shell_config}: {e}")
         return False
 
 
 def create_env_file(api_keys: Dict[str, str], env_file_path: Optional[Path] = None) -> bool:
     """
-    Create a .env file with the API keys (alternative to shell config)
+    APIキーを含む.envファイルを作成します（シェル設定の代替）
     
     Args:
-        api_keys: Dictionary of environment variable names to values
-        env_file_path: Path to the .env file (defaults to home directory)
+        api_keys: 環境変数名と値の辞書
+        env_file_path: .envファイルへのパス（デフォルトはホームディレクトリ）
         
     Returns:
-        True if .env file was created successfully, False otherwise
+        .envファイルが正常に作成された場合はTrue、それ以外はFalse
     """
     if env_file_path is None:
         env_file_path = Path.home() / ".env"
@@ -441,7 +441,7 @@ def create_env_file(api_keys: Dict[str, str], env_file_path: Optional[Path] = No
             
             # Check if this variable already exists
             if f'{env_var}=' in existing_content:
-                logger.info(f"Variable {env_var} already exists in .env file")
+                logger.info(f"Variable {env_var} は既に.envファイルに存在します")
             else:
                 new_lines.append(line)
         
@@ -457,12 +457,12 @@ def create_env_file(api_keys: Dict[str, str], env_file_path: Optional[Path] = No
             # Set file permissions (readable only by owner)
             env_file_path.chmod(0o600)
             
-            display_success(f"Created .env file at {env_file_path}")
-            logger.info(f"Created .env file with {len(new_lines)} new variables")
+            display_success(f".envファイルを次の場所に作成しました {env_file_path}")
+            logger.info(f".envファイルを...で作成しました {len(new_lines)} 個の新しい変数")
         
         return True
         
     except Exception as e:
-        logger.error(f"Failed to create .env file: {e}")
-        display_warning(f"Could not create .env file: {e}")
+        logger.error(f".envファイルの作成に失敗しました: {e}")
+        display_warning(f".envファイルを作成できませんでした: {e}")
         return False

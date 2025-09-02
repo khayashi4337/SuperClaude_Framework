@@ -15,20 +15,20 @@ class ModesComponent(Component):
     
     def __init__(self, install_dir: Optional[Path] = None):
         """Initialize modes component"""
-        super().__init__(install_dir, Path(""))
+        super().__init__(install_dir, "modes")
     
     def get_metadata(self) -> Dict[str, str]:
         """Get component metadata"""
         return {
             "name": "modes",
             "version": __version__,
-            "description": "SuperClaude behavioral modes (Brainstorming, Introspection, Task Management, Token Efficiency)",
+            "description": "SuperClaudeの振る舞いモード (ブレインストーミング, 内省, タスク管理, トークン効率)",
             "category": "modes"
         }
     
     def _install(self, config: Dict[str, Any]) -> bool:
         """Install modes component"""
-        self.logger.info("Installing SuperClaude behavioral modes...")
+        self.logger.info("SuperClaudeの振る舞いモードをインストール中...")
 
         # Validate installation
         success, errors = self.validate_prerequisites()
@@ -41,25 +41,25 @@ class ModesComponent(Component):
         files_to_install = self.get_files_to_install()
 
         if not files_to_install:
-            self.logger.warning("No mode files found to install")
+            self.logger.warning("インストールするモードファイルが見つかりません")
             return False
 
         # Copy mode files
         success_count = 0
         for source, target in files_to_install:
-            self.logger.debug(f"Copying {source.name} to {target}")
+            self.logger.debug(f"{source.name} を {target} にコピー中")
             
             if self.file_manager.copy_file(source, target):
                 success_count += 1
-                self.logger.debug(f"Successfully copied {source.name}")
+                self.logger.debug(f"{source.name}のコピーに成功しました")
             else:
-                self.logger.error(f"Failed to copy {source.name}")
+                self.logger.error(f"{source.name}のコピーに失敗しました")
 
         if success_count != len(files_to_install):
-            self.logger.error(f"Only {success_count}/{len(files_to_install)} mode files copied successfully")
+            self.logger.error(f"{len(files_to_install)}個のモードファイルのうち{success_count}個のみ正常にコピーされました")
             return False
 
-        self.logger.success(f"Modes component installed successfully ({success_count} mode files)")
+        self.logger.success(f"モードコンポーネントが正常にインストールされました（{success_count}個のモードファイル）")
 
         return self._post_install()
 
@@ -77,33 +77,33 @@ class ModesComponent(Component):
                 }
             }
             self.settings_manager.update_metadata(metadata_mods)
-            self.logger.info("Updated metadata with modes component registration")
+            self.logger.info("メタデータをモードコンポーネントの登録で更新しました")
             
             # Update CLAUDE.md with mode imports
             try:
                 manager = CLAUDEMdService(self.install_dir)
                 manager.add_imports(self.component_files, category="Behavioral Modes")
-                self.logger.info("Updated CLAUDE.md with mode imports")
+                self.logger.info("CLAUDE.mdをモードのインポートで更新しました")
             except Exception as e:
-                self.logger.warning(f"Failed to update CLAUDE.md with mode imports: {e}")
+                self.logger.warning(f"CLAUDE.mdをモードのインポートで更新できませんでした: {e}")
                 # Don't fail the whole installation for this
             
             return True
         except Exception as e:
-            self.logger.error(f"Failed to update metadata: {e}")
+            self.logger.error(f"メタデータの更新に失敗しました: {e}")
             return False
     
     def uninstall(self) -> bool:
         """Uninstall modes component"""
         try:
-            self.logger.info("Uninstalling SuperClaude modes component...")
+            self.logger.info("SuperClaudeモードコンポーネントをアンインストール中...")
             
             # Remove mode files
             removed_count = 0
             for _, target in self.get_files_to_install():
                 if self.file_manager.remove_file(target):
                     removed_count += 1
-                    self.logger.debug(f"Removed {target.name}")
+                    self.logger.debug(f"削除しました {target.name}")
             
             # Remove modes directory if empty
             try:
@@ -111,23 +111,23 @@ class ModesComponent(Component):
                     remaining_files = list(self.install_component_subdir.iterdir())
                     if not remaining_files:
                         self.install_component_subdir.rmdir()
-                        self.logger.debug("Removed empty modes directory")
+                        self.logger.debug("空のmodesディレクトリを削除しました")
             except Exception as e:
-                self.logger.warning(f"Could not remove modes directory: {e}")
+                self.logger.warning(f"modesディレクトリを削除できませんでした: {e}")
             
             # Update settings.json
             try:
                 if self.settings_manager.is_component_installed("modes"):
                     self.settings_manager.remove_component_registration("modes")
-                    self.logger.info("Removed modes component from settings.json")
+                    self.logger.info("settings.jsonからモードコンポーネントを削除しました")
             except Exception as e:
-                self.logger.warning(f"Could not update settings.json: {e}")
+                self.logger.warning(f"settings.jsonを更新できませんでした: {e}")
             
-            self.logger.success(f"Modes component uninstalled ({removed_count} files removed)")
+            self.logger.success(f"モードコンポーネントがアンインストールされました（{removed_count}個のファイルを削除）")
             return True
             
         except Exception as e:
-            self.logger.exception(f"Unexpected error during modes uninstallation: {e}")
+            self.logger.exception(f"モードのアンインストール中に予期しないエラーが発生しました: {e}")
             return False
     
     def get_dependencies(self) -> List[str]:

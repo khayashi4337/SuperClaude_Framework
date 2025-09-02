@@ -1,5 +1,5 @@
 """
-Logging system for SuperClaude installation suite
+SuperClaudeインストールスイートのロギングシステム
 """
 
 import logging
@@ -13,7 +13,7 @@ from .ui import Colors
 
 
 class LogLevel(Enum):
-    """Log levels"""
+    """ログレベル"""
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -22,7 +22,7 @@ class LogLevel(Enum):
 
 
 class Logger:
-    """Enhanced logger with console and file output"""
+    """コンソールとファイル出力を備えた強化ロガー"""
     
     def __init__(self, name: str = "superclaude", log_dir: Optional[Path] = None, console_level: LogLevel = LogLevel.INFO, file_level: LogLevel = LogLevel.DEBUG):
         """
@@ -60,7 +60,7 @@ class Logger:
         }
     
     def _setup_console_handler(self) -> None:
-        """Setup colorized console handler"""
+        """色付きコンソールハンドラーを設定"""
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(self.console_level.value)
         
@@ -94,7 +94,7 @@ class Logger:
         self.logger.addHandler(handler)
     
     def _setup_file_handler(self) -> None:
-        """Setup file handler with rotation"""
+        """ローテーション付きファイルハンドラーを設定"""
         try:
             # Ensure log directory exists
             self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -121,11 +121,11 @@ class Logger:
             
         except Exception as e:
             # If file logging fails, continue with console only
-            print(f"{Colors.YELLOW}[!] Could not setup file logging: {e}{Colors.RESET}")
+            print(f"{Colors.YELLOW}[!] ファイルロギングを設定できませんでした: {e}{Colors.RESET}")
             self.log_file = None
     
     def _cleanup_old_logs(self, keep_count: int = 10) -> None:
-        """Clean up old log files"""
+        """古いログファイルをクリーンアップ"""
         try:
             # Get all log files for this logger
             log_files = list(self.log_dir.glob(f"{self.name}_*.log"))
@@ -144,32 +144,32 @@ class Logger:
             pass  # Ignore cleanup errors
     
     def debug(self, message: str, **kwargs) -> None:
-        """Log debug message"""
+        """デバッグメッセージをログに記録"""
         self.logger.debug(message, **kwargs)
         self.log_counts['debug'] += 1
     
     def info(self, message: str, **kwargs) -> None:
-        """Log info message"""
+        """情報メッセージをログに記録"""
         self.logger.info(message, **kwargs)
         self.log_counts['info'] += 1
     
     def warning(self, message: str, **kwargs) -> None:
-        """Log warning message"""
+        """警告メッセージをログに記録"""
         self.logger.warning(message, **kwargs)
         self.log_counts['warning'] += 1
     
     def error(self, message: str, **kwargs) -> None:
-        """Log error message"""
+        """エラーメッセージをログに記録"""
         self.logger.error(message, **kwargs)
         self.log_counts['error'] += 1
     
     def critical(self, message: str, **kwargs) -> None:
-        """Log critical message"""
+        """クリティカルメッセージをログに記録"""
         self.logger.critical(message, **kwargs)
         self.log_counts['critical'] += 1
     
     def success(self, message: str, **kwargs) -> None:
-        """Log success message (info level with special formatting)"""
+        """成功メッセージをログに記録（特別なフォーマットのinfoレベル）"""
         # Use a custom success formatter for console
         if self.logger.handlers:
             console_handler = self.logger.handlers[0]
@@ -190,46 +190,46 @@ class Logger:
         self.log_counts['info'] += 1
     
     def step(self, step: int, total: int, message: str, **kwargs) -> None:
-        """Log step progress"""
+        """ステップの進捗をログに記録"""
         step_msg = f"[{step}/{total}] {message}"
         self.info(step_msg, **kwargs)
     
     def section(self, title: str, **kwargs) -> None:
-        """Log section header"""
+        """セクションヘッダーをログに記録"""
         separator = "=" * min(50, len(title) + 4)
         self.info(separator, **kwargs)
         self.info(f"  {title}", **kwargs)
         self.info(separator, **kwargs)
     
     def exception(self, message: str, exc_info: bool = True, **kwargs) -> None:
-        """Log exception with traceback"""
+        """トレースバック付きで例外をログに記録"""
         self.logger.error(message, exc_info=exc_info, **kwargs)
         self.log_counts['error'] += 1
     
     def log_system_info(self, info: Dict[str, Any]) -> None:
-        """Log system information"""
-        self.section("System Information")
+        """システム情報をログに記録"""
+        self.section("システム情報")
         for key, value in info.items():
             self.info(f"{key}: {value}")
     
     def log_operation_start(self, operation: str, details: Optional[Dict[str, Any]] = None) -> None:
-        """Log start of operation"""
-        self.section(f"Starting: {operation}")
+        """操作の開始をログに記録"""
+        self.section(f"開始中: {operation}")
         if details:
             for key, value in details.items():
                 self.info(f"{key}: {value}")
     
     def log_operation_end(self, operation: str, success: bool, duration: float, details: Optional[Dict[str, Any]] = None) -> None:
-        """Log end of operation"""
+        """操作の終了をログに記録"""
         status = "SUCCESS" if success else "FAILED"
-        self.info(f"Operation {operation} completed: {status} (Duration: {duration:.2f}s)")
+        self.info(f"操作 {operation} 完了: {status} (期間: {duration:.2f}s)")
         
         if details:
             for key, value in details.items():
                 self.info(f"{key}: {value}")
     
     def get_statistics(self) -> Dict[str, Any]:
-        """Get logging statistics"""
+        """ロギング統計を取得"""
         runtime = datetime.now() - self.session_start
         
         return {
@@ -242,35 +242,35 @@ class Logger:
         }
     
     def set_console_level(self, level: LogLevel) -> None:
-        """Change console logging level"""
+        """コンソールのロギングレベルを変更"""
         self.console_level = level
         if self.logger.handlers:
             self.logger.handlers[0].setLevel(level.value)
     
     def set_file_level(self, level: LogLevel) -> None:
-        """Change file logging level"""
+        """ファイルのロギングレベルを変更"""
         self.file_level = level
         if len(self.logger.handlers) > 1:
             self.logger.handlers[1].setLevel(level.value)
     
     def flush(self) -> None:
-        """Flush all handlers"""
+        """すべてのハンドラーをフラッシュ"""
         for handler in self.logger.handlers:
             if hasattr(handler, 'flush'):
                 handler.flush()
     
     def close(self) -> None:
-        """Close logger and handlers"""
-        self.section("Installation Session Complete")
+        """ロガーとハンドラーを閉じる"""
+        self.section("インストールセッション完了")
         stats = self.get_statistics()
         
-        self.info(f"Total runtime: {stats['runtime_seconds']:.1f} seconds")
-        self.info(f"Messages logged: {stats['total_messages']}")
+        self.info(f"総実行時間: {stats['runtime_seconds']:.1f} 秒")
+        self.info(f"ログに記録されたメッセージ: {stats['total_messages']}")
         if stats['has_errors']:
             self.warning(f"Errors/warnings: {stats['log_counts']['error'] + stats['log_counts']['warning']}")
         
         if stats['log_file']:
-            self.info(f"Full log saved to: {stats['log_file']}")
+            self.info(f"完全なログの保存先: {stats['log_file']}")
         
         # Close all handlers
         for handler in self.logger.handlers[:]:
@@ -283,7 +283,7 @@ _global_logger: Optional[Logger] = None
 
 
 def get_logger(name: str = "superclaude") -> Logger:
-    """Get or create global logger instance"""
+    """グローバルロガーインスタンスを取得または作成"""
     global _global_logger
     
     if _global_logger is None or _global_logger.name != name:
@@ -293,7 +293,7 @@ def get_logger(name: str = "superclaude") -> Logger:
 
 
 def setup_logging(name: str = "superclaude", log_dir: Optional[Path] = None, console_level: LogLevel = LogLevel.INFO, file_level: LogLevel = LogLevel.DEBUG) -> Logger:
-    """Setup logging with specified configuration"""
+    """指定された設定でロギングを設定"""
     global _global_logger
     _global_logger = Logger(name, log_dir, console_level, file_level)
     return _global_logger
@@ -301,30 +301,30 @@ def setup_logging(name: str = "superclaude", log_dir: Optional[Path] = None, con
 
 # Convenience functions using global logger
 def debug(message: str, **kwargs) -> None:
-    """Log debug message using global logger"""
+    """グローバルロガーを使用してデバッグメッセージをログに記録"""
     get_logger().debug(message, **kwargs)
 
 
 def info(message: str, **kwargs) -> None:
-    """Log info message using global logger"""
+    """グローバルロガーを使用して情報メッセージをログに記録"""
     get_logger().info(message, **kwargs)
 
 
 def warning(message: str, **kwargs) -> None:
-    """Log warning message using global logger"""
+    """グローバルロガーを使用して警告メッセージをログに記録"""
     get_logger().warning(message, **kwargs)
 
 
 def error(message: str, **kwargs) -> None:
-    """Log error message using global logger"""
+    """グローバルロガーを使用してエラーメッセージをログに記録"""
     get_logger().error(message, **kwargs)
 
 
 def critical(message: str, **kwargs) -> None:
-    """Log critical message using global logger"""
+    """グローバルロガーを使用してクリティカルメッセージをログに記録"""
     get_logger().critical(message, **kwargs)
 
 
 def success(message: str, **kwargs) -> None:
-    """Log success message using global logger"""
+    """グローバルロガーを使用して成功メッセージをログに記録"""
     get_logger().success(message, **kwargs)

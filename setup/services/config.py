@@ -1,5 +1,5 @@
 """
-Configuration management for SuperClaude installation system
+SuperClaudeインストールシステムの設定管理
 """
 
 import json
@@ -15,36 +15,36 @@ except ImportError:
     JSONSCHEMA_AVAILABLE = False
     
     class ValidationError(Exception):
-        """Simple validation error for when jsonschema is not available"""
+        """jsonschemaが利用できない場合のシンプルな検証エラー"""
         def __init__(self, message):
             self.message = message
             super().__init__(message)
     
     def validate(instance, schema):
-        """Dummy validation function"""
+        """ダミーの検証関数"""
         # Basic type checking only
         if "type" in schema:
             expected_type = schema["type"]
             if expected_type == "object" and not isinstance(instance, dict):
-                raise ValidationError(f"Expected object, got {type(instance).__name__}")
+                raise ValidationError(f"オブジェクトを期待していましたが、取得したのは {type(instance).__name__}")
             elif expected_type == "array" and not isinstance(instance, list):
-                raise ValidationError(f"Expected array, got {type(instance).__name__}")
+                raise ValidationError(f"配列を期待していましたが、取得したのは {type(instance).__name__}")
             elif expected_type == "string" and not isinstance(instance, str):
-                raise ValidationError(f"Expected string, got {type(instance).__name__}")
+                raise ValidationError(f"文字列を期待していましたが、取得したのは {type(instance).__name__}")
             elif expected_type == "integer" and not isinstance(instance, int):
-                raise ValidationError(f"Expected integer, got {type(instance).__name__}")
+                raise ValidationError(f"整数を期待していましたが、取得したのは {type(instance).__name__}")
         # Skip detailed validation if jsonschema not available
 
 
 class ConfigService:
-    """Manages configuration files and validation"""
+    """設定ファイルと検証を管理します"""
     
     def __init__(self, config_dir: Path):
         """
-        Initialize config manager
+        設定マネージャーを初期化します
         
         Args:
-            config_dir: Directory containing configuration files
+            config_dir: 設定ファイルを含むディレクトリ
         """
         self.config_dir = config_dir
         self.features_file = config_dir / "features.json"
@@ -166,7 +166,7 @@ class ConfigService:
             return self._features_cache
             
         if not self.features_file.exists():
-            raise FileNotFoundError(f"Features config not found: {self.features_file}")
+            raise FileNotFoundError(f"機能設定が見つかりません: {self.features_file}")
         
         try:
             with open(self.features_file, 'r') as f:
@@ -179,9 +179,9 @@ class ConfigService:
             return features
             
         except json.JSONDecodeError as e:
-            raise ValidationError(f"Invalid JSON in {self.features_file}: {e}")
+            raise ValidationError(f"無効なJSON: {self.features_file}: {e}")
         except ValidationError as e:
-            raise ValidationError(f"Invalid features schema: {str(e)}")
+            raise ValidationError(f"無効な機能スキーマ: {str(e)}")
     
     def load_requirements(self) -> Dict[str, Any]:
         """
@@ -198,7 +198,7 @@ class ConfigService:
             return self._requirements_cache
             
         if not self.requirements_file.exists():
-            raise FileNotFoundError(f"Requirements config not found: {self.requirements_file}")
+            raise FileNotFoundError(f"要件設定が見つかりません: {self.requirements_file}")
         
         try:
             with open(self.requirements_file, 'r') as f:
@@ -211,29 +211,29 @@ class ConfigService:
             return requirements
             
         except json.JSONDecodeError as e:
-            raise ValidationError(f"Invalid JSON in {self.requirements_file}: {e}")
+            raise ValidationError(f"無効なJSON: {self.requirements_file}: {e}")
         except ValidationError as e:
-            raise ValidationError(f"Invalid requirements schema: {str(e)}")
+            raise ValidationError(f"無効な要件スキーマ: {str(e)}")
     
     def get_component_info(self, component_name: str) -> Optional[Dict[str, Any]]:
         """
-        Get information about a specific component
+        特定のコンポーネントに関する情報を取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Component info dict or None if not found
+            コンポーネント情報辞書、見つからない場合はNone
         """
         features = self.load_features()
         return features.get("components", {}).get(component_name)
     
     def get_enabled_components(self) -> List[str]:
         """
-        Get list of enabled component names
+        有効なコンポーネント名のリストを取得します
         
         Returns:
-            List of enabled component names
+            有効なコンポーネント名のリスト
         """
         features = self.load_features()
         enabled = []
@@ -246,13 +246,13 @@ class ConfigService:
     
     def get_components_by_category(self, category: str) -> List[str]:
         """
-        Get component names by category
+        カテゴリ別のコンポーネント名を取得します
         
         Args:
-            category: Component category
+            category: コンポーネントカテゴリ
             
         Returns:
-            List of component names in category
+            カテゴリ内のコンポーネント名のリスト
         """
         features = self.load_features()
         components = []
@@ -265,13 +265,13 @@ class ConfigService:
     
     def get_component_dependencies(self, component_name: str) -> List[str]:
         """
-        Get dependencies for a component
+        コンポーネントの依存関係を取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            List of dependency component names
+            依存コンポーネント名のリスト
         """
         component_info = self.get_component_info(component_name)
         if component_info:
@@ -280,22 +280,22 @@ class ConfigService:
     
     def get_system_requirements(self) -> Dict[str, Any]:
         """
-        Get system requirements
+        システム要件を取得します
         
         Returns:
-            System requirements dict
+            システム要件の辞書
         """
         return self.load_requirements()
     
     def get_requirements_for_components(self, component_names: List[str]) -> Dict[str, Any]:
         """
-        Get consolidated requirements for specific components
+        特定のコンポーネントの統合された要件を取得します
         
         Args:
-            component_names: List of component names
+            component_names: コンポーネント名のリスト
             
         Returns:
-            Consolidated requirements dict
+            統合された要件の辞書
         """
         requirements = self.load_requirements()
         features = self.load_features()
@@ -333,26 +333,26 @@ class ConfigService:
     
     def validate_config_files(self) -> List[str]:
         """
-        Validate all configuration files
+        すべての設定ファイルを検証します
         
         Returns:
-            List of validation errors (empty if all valid)
+            検証エラーのリスト（すべて有効な場合は空）
         """
         errors = []
         
         try:
             self.load_features()
         except Exception as e:
-            errors.append(f"Features config error: {e}")
+            errors.append(f"機能設定エラー: {e}")
         
         try:
             self.load_requirements()
         except Exception as e:
-            errors.append(f"Requirements config error: {e}")
+            errors.append(f"要件設定エラー: {e}")
         
         return errors
     
     def clear_cache(self) -> None:
-        """Clear cached configuration data"""
+        """キャッシュされた設定データをクリア"""
         self._features_cache = None
         self._requirements_cache = None

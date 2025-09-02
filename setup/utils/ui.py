@@ -1,6 +1,6 @@
 """
-User interface utilities for SuperClaude installation system
-Cross-platform console UI with colors and progress indication
+SuperClaudeインストールシステム用のユーザーインターフェースユーティリティ
+色と進捗表示を備えたクロスプラットフォームのコンソールUI
 """
 
 import sys
@@ -37,7 +37,7 @@ except ImportError:
 
 
 class Colors:
-    """Color constants for console output"""
+    """コンソール出力用の色定数"""
     RED = Fore.RED
     GREEN = Fore.GREEN
     YELLOW = Fore.YELLOW
@@ -50,17 +50,17 @@ class Colors:
 
 
 class ProgressBar:
-    """Cross-platform progress bar with customizable display"""
+    """カスタマイズ可能な表示を備えたクロスプラットフォームのプログレスバー"""
     
     def __init__(self, total: int, width: int = 50, prefix: str = '', suffix: str = ''):
         """
-        Initialize progress bar
+        プログレスバーを初期化します
         
         Args:
-            total: Total number of items to process
-            width: Width of progress bar in characters
-            prefix: Text to display before progress bar
-            suffix: Text to display after progress bar
+            total: 処理するアイテムの総数
+            width: プログレスバーの幅（文字数）
+            prefix: プログレスバーの前に表示するテキスト
+            suffix: プログレスバーの後に表示するテキスト
         """
         self.total = total
         self.width = width
@@ -77,11 +77,11 @@ class ProgressBar:
     
     def update(self, current: int, message: str = '') -> None:
         """
-        Update progress bar
+        プログレスバーを更新します
         
         Args:
-            current: Current progress value
-            message: Optional message to display
+            current: 現在の進行状況の値
+            message: 表示するオプションのメッセージ
         """
         self.current = current
         percent = min(100, (current / self.total) * 100) if self.total > 0 else 100
@@ -122,25 +122,25 @@ class ProgressBar:
     
     def increment(self, message: str = '') -> None:
         """
-        Increment progress by 1
+        進行状況を1つインクリメントします
         
         Args:
-            message: Optional message to display
+            message: 表示するオプションのメッセージ
         """
         self.update(self.current + 1, message)
     
     def finish(self, message: str = 'Complete') -> None:
         """
-        Complete progress bar
+        プログレスバーを完了します
         
         Args:
-            message: Completion message
+            message: 完了メッセージ
         """
         self.update(self.total, message)
         print()  # New line after completion
     
     def _format_time(self, seconds: float) -> str:
-        """Format time duration as human-readable string"""
+        """時間の長さを人間が読める文字列としてフォーマット"""
         if seconds < 60:
             return f"{seconds:.0f}s"
         elif seconds < 3600:
@@ -152,16 +152,16 @@ class ProgressBar:
 
 
 class Menu:
-    """Interactive menu system with keyboard navigation"""
+    """キーボードナビゲーション付きの対話型メニューシステム"""
     
     def __init__(self, title: str, options: List[str], multi_select: bool = False):
         """
-        Initialize menu
+        メニューを初期化します
         
         Args:
-            title: Menu title
-            options: List of menu options
-            multi_select: Allow multiple selections
+            title: メニューのタイトル
+            options: メニューオプションのリスト
+            multi_select: 複数選択を許可
         """
         self.title = title
         self.options = options
@@ -170,10 +170,10 @@ class Menu:
         
     def display(self) -> Union[int, List[int]]:
         """
-        Display menu and get user selection
+        メニューを表示してユーザーの選択を取得します
         
         Returns:
-            Selected option index (single) or list of indices (multi-select)
+            選択されたオプションのインデックス（単一）またはインデックスのリスト（複数選択）
         """
         print(f"\n{Colors.CYAN}{Colors.BRIGHT}{self.title}{Colors.RESET}")
         print("=" * len(self.title))
@@ -186,9 +186,9 @@ class Menu:
                 print(f"{Colors.YELLOW}{i:2d}.{Colors.RESET} {option}")
         
         if self.multi_select:
-            print(f"\n{Colors.BLUE}Enter numbers separated by commas (e.g., 1,3,5) or 'all' for all options:{Colors.RESET}")
+            print(f"\n{Colors.BLUE}カンマで区切られた数字（例: 1,3,5）またはすべてのオプションに対して'all'を入力してください:{Colors.RESET}")
         else:
-            print(f"\n{Colors.BLUE}Enter your choice (1-{len(self.options)}):{Colors.RESET}")
+            print(f"\n{Colors.BLUE}選択を入力してください (1-{len(self.options)}):{Colors.RESET}")
         
         while True:
             try:
@@ -209,9 +209,9 @@ class Menu:
                                 if 0 <= idx < len(self.options):
                                     selections.append(idx)
                                 else:
-                                    raise ValueError(f"Invalid option: {part}")
+                                    raise ValueError(f"無効なオプション: {part}")
                             else:
-                                raise ValueError(f"Invalid input: {part}")
+                                raise ValueError(f"無効な入力: {part}")
                         return list(set(selections))  # Remove duplicates
                 else:
                     if user_input.isdigit():
@@ -219,28 +219,28 @@ class Menu:
                         if 0 <= choice < len(self.options):
                             return choice
                         else:
-                            print(f"{Colors.RED}Invalid choice. Please enter a number between 1 and {len(self.options)}.{Colors.RESET}")
+                            print(f"{Colors.RED}無効な選択です。1から...の間の数字を入力してください {len(self.options)}.{Colors.RESET}")
                     else:
-                        print(f"{Colors.RED}Please enter a valid number.{Colors.RESET}")
+                        print(f"{Colors.RED}有効な数値を入力してください。{Colors.RESET}")
                         
             except (ValueError, KeyboardInterrupt) as e:
                 if isinstance(e, KeyboardInterrupt):
-                    print(f"\n{Colors.YELLOW}Operation cancelled.{Colors.RESET}")
+                    print(f"\n{Colors.YELLOW}操作がキャンセルされました。{Colors.RESET}")
                     return [] if self.multi_select else -1
                 else:
-                    print(f"{Colors.RED}Invalid input: {e}{Colors.RESET}")
+                    print(f"{Colors.RED}無効な入力: {e}{Colors.RESET}")
 
 
 def confirm(message: str, default: bool = True) -> bool:
     """
-    Ask for user confirmation
+    ユーザーに確認を求めます
     
     Args:
-        message: Confirmation message
-        default: Default response if user just presses Enter
+        message: 確認メッセージ
+        default: ユーザーがEnterキーのみを押した場合のデフォルトの応答
         
     Returns:
-        True if confirmed, False otherwise
+        確認された場合はTrue、それ以外はFalse
     """
     suffix = "[Y/n]" if default else "[y/N]"
     print(f"{Colors.BLUE}{message} {suffix}{Colors.RESET}")
@@ -256,20 +256,20 @@ def confirm(message: str, default: bool = True) -> bool:
             elif response in ['n', 'no', 'false', '0']:
                 return False
             else:
-                print(f"{Colors.RED}Please enter 'y' or 'n' (or press Enter for default).{Colors.RESET}")
+                print(f"{Colors.RED}'y'または'n'を入力してください（またはデフォルトの場合はEnterキーを押してください）。{Colors.RESET}")
                 
         except KeyboardInterrupt:
-            print(f"\n{Colors.YELLOW}Operation cancelled.{Colors.RESET}")
+            print(f"\n{Colors.YELLOW}操作がキャンセルされました。{Colors.RESET}")
             return False
 
 
 def display_header(title: str, subtitle: str = '') -> None:
     """
-    Display formatted header
+    フォーマットされたヘッダーを表示します
     
     Args:
-        title: Main title
-        subtitle: Optional subtitle
+            title: メインタイトル
+            subtitle: オプションのサブタイトル
     """
     print(f"\n{Colors.CYAN}{Colors.BRIGHT}{'='*60}{Colors.RESET}")
     print(f"{Colors.CYAN}{Colors.BRIGHT}{title:^60}{Colors.RESET}")
@@ -279,38 +279,38 @@ def display_header(title: str, subtitle: str = '') -> None:
 
 
 def display_info(message: str) -> None:
-    """Display info message"""
+    """情報メッセージを表示"""
     print(f"{Colors.BLUE}[INFO] {message}{Colors.RESET}")
 
 
 def display_success(message: str) -> None:
-    """Display success message"""
+    """成功メッセージを表示"""
     print(f"{Colors.GREEN}[✓] {message}{Colors.RESET}")
 
 
 def display_warning(message: str) -> None:
-    """Display warning message"""
+    """警告メッセージを表示"""
     print(f"{Colors.YELLOW}[!] {message}{Colors.RESET}")
 
 
 def display_error(message: str) -> None:
-    """Display error message"""
+    """エラーメッセージを表示"""
     print(f"{Colors.RED}[✗] {message}{Colors.RESET}")
 
 
 def display_step(step: int, total: int, message: str) -> None:
-    """Display step progress"""
+    """ステップの進捗を表示"""
     print(f"{Colors.CYAN}[{step}/{total}] {message}{Colors.RESET}")
 
 
 def display_table(headers: List[str], rows: List[List[str]], title: str = '') -> None:
     """
-    Display data in table format
+    データをテーブル形式で表示します
     
     Args:
-        headers: Column headers
-        rows: Data rows
-        title: Optional table title
+        headers: 列ヘッダー
+        rows: データ行
+        title: オプションのテーブルタイトル
     """
     if not rows:
         return
@@ -342,25 +342,25 @@ def display_table(headers: List[str], rows: List[List[str]], title: str = '') ->
 
 def prompt_api_key(service_name: str, env_var_name: str) -> Optional[str]:
     """
-    Prompt for API key with security and UX best practices
+    セキュリティとUXのベストプラクティスを用いてAPIキーの入力を促します
     
     Args:
-        service_name: Human-readable service name (e.g., "Magic", "Morphllm")
-        env_var_name: Environment variable name (e.g., "TWENTYFIRST_API_KEY")
+        service_name: 人間が読めるサービス名 (例: "Magic", "Morphllm")
+        env_var_name: 環境変数名 (例: "TWENTYFIRST_API_KEY")
         
     Returns:
-        API key string if provided, None if skipped
+        提供された場合はAPIキー文字列、スキップされた場合はNone
     """
-    print(f"{Colors.BLUE}[API KEY] {service_name} requires: {Colors.BRIGHT}{env_var_name}{Colors.RESET}")
-    print(f"{Colors.WHITE}Visit the service documentation to obtain your API key{Colors.RESET}")
-    print(f"{Colors.YELLOW}Press Enter to skip (you can set this manually later){Colors.RESET}")
+    print(f"{Colors.BLUE}[API KEY] {service_name} が必要です: {Colors.BRIGHT}{env_var_name}{Colors.RESET}")
+    print(f"{Colors.WHITE}APIキーを取得するには、サービスのドキュメントにアクセスしてください{Colors.RESET}")
+    print(f"{Colors.YELLOW}スキップするにはEnterキーを押してください（後で手動で設定できます）{Colors.RESET}")
     
     try:
         # Use getpass for hidden input
-        api_key = getpass.getpass(f"Enter {env_var_name}: ").strip()
+        api_key = getpass.getpass(f"入力 {env_var_name}: ").strip()
         
         if not api_key:
-            print(f"{Colors.YELLOW}[SKIPPED] {env_var_name} - set manually later{Colors.RESET}")
+            print(f"{Colors.YELLOW}[SKIPPED] {env_var_name} - 後で手動で設定{Colors.RESET}")
             return None
         
         # Basic validation (non-empty, reasonable length)
@@ -369,7 +369,7 @@ def prompt_api_key(service_name: str, env_var_name: str) -> Optional[str]:
             if not confirm("", default=False):
                 return None
         
-        print(f"{Colors.GREEN}[✓] {env_var_name} configured{Colors.RESET}")
+        print(f"{Colors.GREEN}[✓] {env_var_name} 設定済み{Colors.RESET}")
         return api_key
         
     except KeyboardInterrupt:
@@ -377,29 +377,29 @@ def prompt_api_key(service_name: str, env_var_name: str) -> Optional[str]:
         return None
 
 
-def wait_for_key(message: str = "Press Enter to continue...") -> None:
-    """Wait for user to press a key"""
+def wait_for_key(message: str = "続行するにはEnterキーを押してください...") -> None:
+    """ユーザーがキーを押すのを待つ"""
     try:
         input(f"{Colors.BLUE}{message}{Colors.RESET}")
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Operation cancelled.{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}操作がキャンセルされました。{Colors.RESET}")
 
 
 def clear_screen() -> None:
-    """Clear terminal screen"""
+    """ターミナル画面をクリア"""
     import os
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
 class StatusSpinner:
-    """Simple status spinner for long operations"""
+    """長時間の操作用のシンプルなステータスピナー"""
     
     def __init__(self, message: str = "Working..."):
         """
-        Initialize spinner
+        スピナーを初期化します
         
         Args:
-            message: Message to display with spinner
+            message: スピナーと共に表示するメッセージ
         """
         self.message = message
         self.spinning = False
@@ -407,7 +407,7 @@ class StatusSpinner:
         self.current = 0
     
     def start(self) -> None:
-        """Start spinner in background thread"""
+        """バックグラウンドスレッドでスピナーを開始"""
         import threading
         
         def spin():
@@ -423,10 +423,10 @@ class StatusSpinner:
     
     def stop(self, final_message: str = '') -> None:
         """
-        Stop spinner
+        スピナーを停止します
         
         Args:
-            final_message: Final message to display
+            final_message: 最後に表示するメッセージ
         """
         self.spinning = False
         if hasattr(self, 'thread'):
@@ -440,7 +440,7 @@ class StatusSpinner:
 
 
 def format_size(size_bytes: int) -> str:
-    """Format file size in human-readable format"""
+    """ファイルサイズを人間が読める形式にフォーマット"""
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size_bytes < 1024.0:
             return f"{size_bytes:.1f} {unit}"
@@ -449,7 +449,7 @@ def format_size(size_bytes: int) -> str:
 
 
 def format_duration(seconds: float) -> str:
-    """Format duration in human-readable format"""
+    """期間を人間が読める形式にフォーマット"""
     if seconds < 1:
         return f"{seconds*1000:.0f}ms"
     elif seconds < 60:
@@ -465,7 +465,7 @@ def format_duration(seconds: float) -> str:
 
 
 def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:
-    """Truncate text to maximum length with optional suffix"""
+    """オプションの接尾辞付きでテキストを最大長に切り詰める"""
     if len(text) <= max_length:
         return text
     

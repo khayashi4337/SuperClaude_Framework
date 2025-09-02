@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-PyPI Build and Upload Script for SuperClaude Framework
-Handles building, validation, and uploading to PyPI with proper error handling
+SuperClaudeフレームワーク用のPyPIビルドおよびアップロードスクリプト
+適切なエラー処理でビルド、検証、PyPIへのアップロードを処理します
 """
 
 import os
@@ -18,7 +18,7 @@ DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
 
 def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
-    """Run a command and return success status and output"""
+    """コマンドを実行し、成功ステータスと出力を返す"""
     print(f"🔄 {description}...")
     try:
         result = subprocess.run(
@@ -28,37 +28,37 @@ def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
             cwd=PROJECT_ROOT,
             check=True
         )
-        print(f"✅ {description} completed successfully")
+        print(f"✅ {description} が正常に完了しました")
         return True, result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed:")
-        print(f"   Exit code: {e.returncode}")
-        print(f"   Error: {e.stderr}")
+        print(f"❌ {description} が失敗しました:")
+        print(f"   終了コード: {e.returncode}")
+        print(f"   エラー: {e.stderr}")
         return False, e.stderr
     except Exception as e:
-        print(f"❌ {description} failed with exception: {e}")
+        print(f"❌ {description} は例外で失敗しました: {e}")
         return False, str(e)
 
 def clean_build_artifacts():
-    """Clean previous build artifacts"""
+    """以前のビルドアーティファクトをクリーンアップ"""
     artifacts = [DIST_DIR, BUILD_DIR, PROJECT_ROOT / "SuperClaude.egg-info"]
     
     for artifact in artifacts:
         if artifact.exists():
-            print(f"🧹 Removing {artifact}")
+            print(f"🧹 削除中 {artifact}")
             if artifact.is_dir():
                 shutil.rmtree(artifact)
             else:
                 artifact.unlink()
 
 def install_build_tools() -> bool:
-    """Install required build tools"""
+    """必要なビルドツールをインストール"""
     tools = ["build", "twine"]
     
     for tool in tools:
         success, _ = run_command(
             [sys.executable, "-m", "pip", "install", "--upgrade", tool],
-            f"Installing {tool}"
+            f"インストール中 {tool}"
         )
         if not success:
             return False
@@ -66,7 +66,7 @@ def install_build_tools() -> bool:
     return True
 
 def validate_project_structure() -> bool:
-    """Validate project structure before building"""
+    """ビルド前にプロジェクト構造を検証"""
     required_files = [
         "pyproject.toml",
         "README.md", 
@@ -76,63 +76,63 @@ def validate_project_structure() -> bool:
         "setup/__init__.py"
     ]
     
-    print("🔍 Validating project structure...")
+    print("🔍 プロジェクト構造を検証中...")
     
     for file_path in required_files:
         full_path = PROJECT_ROOT / file_path
         if not full_path.exists():
-            print(f"❌ Missing required file: {file_path}")
+            print(f"❌ 必要なファイルがありません: {file_path}")
             return False
     
     # Check if version is consistent
     try:
         from SuperClaude import __version__
-        print(f"📦 Package version: {__version__}")
+        print(f"📦 パッケージバージョン: {__version__}")
     except ImportError as e:
-        print(f"❌ Could not import version from SuperClaude: {e}")
+        print(f"❌ SuperClaudeからバージョンをインポートできませんでした: {e}")
         return False
     
-    print("✅ Project structure validation passed")
+    print("✅ プロジェクト構造の検証に合格しました")
     return True
 
 def build_package() -> bool:
-    """Build the package"""
+    """パッケージをビルド"""
     return run_command(
         [sys.executable, "-m", "build"],
-        "Building package distributions"
+        "パッケージ配布物をビルド中"
     )[0]
 
 def validate_distribution() -> bool:
-    """Validate the built distribution"""
+    """ビルドされた配布物を検証"""
     if not DIST_DIR.exists():
-        print("❌ Distribution directory does not exist")
+        print("❌ 配布ディレクトリが存在しません")
         return False
     
     dist_files = list(DIST_DIR.glob("*"))
     if not dist_files:
-        print("❌ No distribution files found")
+        print("❌ 配布ファイルが見つかりません")
         return False
     
-    print(f"📦 Found distribution files:")
+    print(f"📦 配布ファイルが見つかりました:")
     for file in dist_files:
         print(f"   - {file.name}")
     
     # Check with twine
     return run_command(
         [sys.executable, "-m", "twine", "check"] + [str(f) for f in dist_files],
-        "Validating distributions with twine"
+        "twineで配布物を検証中"
     )[0]
 
 def upload_to_testpypi() -> bool:
-    """Upload to TestPyPI for testing"""
+    """テストのためにTestPyPIにアップロード"""
     dist_files = list(DIST_DIR.glob("*"))
     return run_command(
         [sys.executable, "-m", "twine", "upload", "--repository", "testpypi"] + [str(f) for f in dist_files],
-        "Uploading to TestPyPI"
+        "TestPyPIにアップロード中"
     )[0]
 
 def upload_to_pypi() -> bool:
-    """Upload to production PyPI"""
+    """本番PyPIにアップロード"""
     dist_files = list(DIST_DIR.glob("*"))
     
     # Check if we have API token in environment
@@ -146,41 +146,41 @@ def upload_to_pypi() -> bool:
         # Fall back to .pypirc configuration
         cmd = [sys.executable, "-m", "twine", "upload"] + [str(f) for f in dist_files]
     
-    return run_command(cmd, "Uploading to PyPI")[0]
+    return run_command(cmd, "PyPIにアップロード中")[0]
 
 def test_installation_from_testpypi() -> bool:
-    """Test installation from TestPyPI"""
-    print("🧪 Testing installation from TestPyPI...")
-    print("   Note: This will install in a separate process")
+    """TestPyPIからのインストールをテスト"""
+    print("🧪 TestPyPIからのインストールをテスト中...")
+    print("   注: これは別のプロセスでインストールされます")
     
     success, output = run_command([
         sys.executable, "-m", "pip", "install", 
         "--index-url", "https://test.pypi.org/simple/",
         "--extra-index-url", "https://pypi.org/simple/",
         "SuperClaude", "--force-reinstall", "--no-deps"
-    ], "Installing from TestPyPI")
+    ], "TestPyPIからインストール中")
     
     if success:
-        print("✅ Test installation successful")
+        print("✅ テストインストールに成功しました")
         # Try to import the package
         try:
             import SuperClaude
-            print(f"✅ Package import successful, version: {SuperClaude.__version__}")
+            print(f"✅ パッケージのインポートに成功しました、バージョン: {SuperClaude.__version__}")
             return True
         except ImportError as e:
-            print(f"❌ Package import failed: {e}")
+            print(f"❌ パッケージのインポートに失敗しました: {e}")
             return False
     
     return False
 
 def main():
-    """Main execution function"""
-    parser = argparse.ArgumentParser(description="Build and upload SuperClaude to PyPI")
-    parser.add_argument("--testpypi", action="store_true", help="Upload to TestPyPI instead of PyPI")
-    parser.add_argument("--test-install", action="store_true", help="Test installation from TestPyPI")
-    parser.add_argument("--skip-build", action="store_true", help="Skip build step (use existing dist)")
-    parser.add_argument("--skip-validation", action="store_true", help="Skip validation steps")
-    parser.add_argument("--clean", action="store_true", help="Only clean build artifacts")
+    """メイン実行関数"""
+    parser = argparse.ArgumentParser(description="SuperClaudeをビルドしてPyPIにアップロード")
+    parser.add_argument("--testpypi", action="store_true", help="PyPIの代わりにTestPyPIにアップロード")
+    parser.add_argument("--test-install", action="store_true", help="TestPyPIからのインストールをテスト")
+    parser.add_argument("--skip-build", action="store_true", help="ビルドステップをスキップ（既存のdistを使用）")
+    parser.add_argument("--skip-validation", action="store_true", help="検証ステップをスキップ")
+    parser.add_argument("--clean", action="store_true", help="ビルドアーティファクトのみをクリーンアップ")
     
     args = parser.parse_args()
     
@@ -191,56 +191,56 @@ def main():
         clean_build_artifacts()
         return
     
-    print("🚀 SuperClaude PyPI Build and Upload Script")
-    print(f"📁 Working directory: {PROJECT_ROOT}")
+    print("🚀 SuperClaude PyPI ビルドおよびアップロードスクリプト")
+    print(f"📁 作業ディレクトリ: {PROJECT_ROOT}")
     
     # Step 1: Clean previous builds
     clean_build_artifacts()
     
     # Step 2: Install build tools
     if not install_build_tools():
-        print("❌ Failed to install build tools")
+        print("❌ ビルドツールのインストールに失敗しました")
         sys.exit(1)
     
     # Step 3: Validate project structure
     if not args.skip_validation and not validate_project_structure():
-        print("❌ Project structure validation failed")
+        print("❌ プロジェクト構造の検証に失敗しました")
         sys.exit(1)
     
     # Step 4: Build package
     if not args.skip_build:
         if not build_package():
-            print("❌ Package build failed")
+            print("❌ パッケージのビルドに失敗しました")
             sys.exit(1)
     
     # Step 5: Validate distribution
     if not args.skip_validation and not validate_distribution():
-        print("❌ Distribution validation failed")
+        print("❌ 配布物の検証に失敗しました")
         sys.exit(1)
     
     # Step 6: Upload
     if args.testpypi:
         if not upload_to_testpypi():
-            print("❌ Upload to TestPyPI failed")
+            print("❌ TestPyPIへのアップロードに失敗しました")
             sys.exit(1)
         
         # Test installation if requested
         if args.test_install:
             if not test_installation_from_testpypi():
-                print("❌ Test installation failed")
+                print("❌ テストインストールに失敗しました")
                 sys.exit(1)
     else:
         # Confirm production upload
         response = input("🚨 Upload to production PyPI? This cannot be undone! (yes/no): ")
         if response.lower() != "yes":
-            print("❌ Upload cancelled")
+            print("❌ アップロードがキャンセルされました")
             sys.exit(1)
         
         if not upload_to_pypi():
-            print("❌ Upload to PyPI failed")
+            print("❌ PyPIへのアップロードに失敗しました")
             sys.exit(1)
     
-    print("✅ All operations completed successfully!")
+    print("✅ すべての操作が正常に完了しました！")
 
 if __name__ == "__main__":
     main()

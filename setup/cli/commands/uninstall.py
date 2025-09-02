@@ -24,24 +24,24 @@ from . import OperationBase
 
 def verify_superclaude_file(file_path: Path, component: str) -> bool:
     """
-    Verify this is a SuperClaude file before removal
+    削除前にこれがSuperClaudeのファイルであることを確認
     
     Args:
         file_path: Path to the file to verify
         component: Component name this file belongs to
         
     Returns:
-        True if safe to remove, False if uncertain (preserve by default)
+        安全に削除できる場合はTrue、不確かな場合はFalse（デフォルトで保持）
     """
     try:
-        # Known SuperClaude file patterns by component
+        # コンポーネント別の既知のSuperClaudeファイルパターン
         superclaude_patterns = {
             'core': [
                 'CLAUDE.md', 'FLAGS.md', 'PRINCIPLES.md', 'RULES.md', 
                 'ORCHESTRATOR.md', 'SESSION_LIFECYCLE.md'
             ],
             'commands': [
-                # Commands are only in sc/ subdirectory
+                # コマンドはsc/サブディレクトリにのみ存在
             ],
             'agents': [
                 'backend-engineer.md', 'brainstorm-PRD.md', 'code-educator.md',
@@ -60,65 +60,65 @@ def verify_superclaude_file(file_path: Path, component: str) -> bool:
             ]
         }
         
-        # For commands component, verify it's in the sc/ subdirectory
+        # commandsコンポーネントの場合、sc/サブディレクトリにあることを確認
         if component == 'commands':
             return 'commands/sc/' in str(file_path)
         
-        # For other components, check against known file lists
+        # 他のコンポーネントの場合、既知のファイルリストと照合
         if component in superclaude_patterns:
             filename = file_path.name
             return filename in superclaude_patterns[component]
         
-        # For MCP component, it doesn't remove files but modifies .claude.json
+        # MCPコンポーネントはファイルを削除せず、.claude.jsonを変更
         if component == 'mcp':
-            return True  # MCP component has its own safety logic
+            return True  # MCPコンポーネントには独自の安全ロジックがあります
         
-        # Default to preserve if uncertain
+        # 不確かな場合はデフォルトで保持
         return False
         
     except Exception:
-        # If any error occurs in verification, preserve the file
+        # 検証中にエラーが発生した場合は、ファイルを保持
         return False
 
 
 def verify_directory_safety(directory: Path, component: str) -> bool:
     """
-    Verify it's safe to remove a directory
+    ディレクトリを安全に削除できることを確認
     
     Args:
         directory: Directory path to verify
         component: Component name
         
     Returns:
-        True if safe to remove (only if empty or only contains SuperClaude files)
+        安全に削除できる場合はTrue（空またはSuperClaudeファイルのみを含む場合）
     """
     try:
         if not directory.exists():
             return True
         
-        # Check if directory is empty
+        # ディレクトリが空かどうかを確認
         contents = list(directory.iterdir())
         if not contents:
             return True
         
-        # Check if all contents are SuperClaude files for this component
+        # すべてのコンテンツがこのコンポーネントのSuperClaudeファイルであることを確認
         for item in contents:
             if item.is_file():
                 if not verify_superclaude_file(item, component):
                     return False
             elif item.is_dir():
-                # Don't remove directories that contain non-SuperClaude subdirectories
+                # SuperClaude以外のサブディレクトリを含むディレクトリは削除しない
                 return False
         
         return True
         
     except Exception:
-        # If any error occurs, preserve the directory
+        # エラーが発生した場合は、ディレクトリを保持
         return False
 
 
 class UninstallOperation(OperationBase):
-    """Uninstall operation implementation"""
+    """アンインストール操作の実装"""
     
     def __init__(self):
         super().__init__("uninstall")
@@ -130,14 +130,14 @@ def register_parser(subparsers, global_parser=None) -> argparse.ArgumentParser:
     
     parser = subparsers.add_parser(
         "uninstall",
-        help="Remove SuperClaude framework installation",
-        description="Uninstall SuperClaude Framework components",
+        help="SuperClaudeフレームワークのインストールを削除します",
+        description="SuperClaudeフレームワークコンポーネントをアンインストールします",
         epilog="""
-Examples:
-  SuperClaude uninstall                    # Interactive uninstall
-  SuperClaude uninstall --components core  # Remove specific components
-  SuperClaude uninstall --complete --force # Complete removal (forced)
-  SuperClaude uninstall --keep-backups     # Keep backup files
+例:
+  SuperClaude uninstall                    # 対話的なアンインストール
+  SuperClaude uninstall --components core  # 特定のコンポーネントを削除
+  SuperClaude uninstall --complete --force # 完全な削除（強制）
+  SuperClaude uninstall --keep-backups     # バックアップファイルを保持
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=parents
@@ -148,58 +148,58 @@ Examples:
         "--components",
         type=str,
         nargs="+",
-        help="Specific components to uninstall"
+        help="アンインストールする特定のコンポーネント"
     )
     
     parser.add_argument(
         "--complete",
         action="store_true",
-        help="Complete uninstall (remove all files and directories)"
+        help="完全なアンインストール（すべてのファイルとディレクトリを削除）"
     )
     
     # Data preservation options
     parser.add_argument(
         "--keep-backups",
         action="store_true",
-        help="Keep backup files during uninstall"
+        help="アンインストール中にバックアップファイルを保持します"
     )
     
     parser.add_argument(
         "--keep-logs",
         action="store_true",
-        help="Keep log files during uninstall"
+        help="アンインストール中にログファイルを保持します"
     )
     
     parser.add_argument(
         "--keep-settings",
         action="store_true",
-        help="Keep user settings during uninstall"
+        help="アンインストール中にユーザー設定を保持します"
     )
     
     # Safety options
     parser.add_argument(
         "--no-confirm",
         action="store_true",
-        help="Skip confirmation prompts (use with caution)"
+        help="確認プロンプトをスキップします（注意して使用）"
     )
     
     # Environment cleanup options
     parser.add_argument(
         "--cleanup-env",
         action="store_true",
-        help="Remove SuperClaude environment variables"
+        help="SuperClaudeの環境変数を削除します"
     )
     
     parser.add_argument(
         "--no-restore-script",
         action="store_true",
-        help="Skip creating environment variable restore script"
+        help="環境変数復元スクリプトの作成をスキップします"
     )
     
     return parser
 
 def get_installed_components(install_dir: Path) -> Dict[str, Dict[str, Any]]:
-    """Get currently installed components and their versions"""
+    """現在インストールされているコンポーネントとそのバージョンを取得"""
     try:
         settings_manager = SettingsService(install_dir)
         return settings_manager.get_installed_components()
@@ -208,7 +208,7 @@ def get_installed_components(install_dir: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def get_installation_info(install_dir: Path) -> Dict[str, Any]:
-    """Get detailed installation information"""
+    """詳細なインストール情報を取得"""
     info = {
         "install_dir": install_dir,
         "exists": False,
@@ -224,7 +224,7 @@ def get_installation_info(install_dir: Path) -> Dict[str, Any]:
     info["exists"] = True
     info["components"] = get_installed_components(install_dir)
     
-    # Scan installation directory
+    # インストールディレクトリをスキャン
     try:
         for item in install_dir.rglob("*"):
             if item.is_file():
@@ -239,160 +239,160 @@ def get_installation_info(install_dir: Path) -> Dict[str, Any]:
 
 
 def display_environment_info() -> Dict[str, str]:
-    """Display SuperClaude environment variables and return them"""
+    """SuperClaudeの環境変数を表示して返す"""
     env_vars = get_superclaude_environment_variables()
     
     if env_vars:
-        print(f"\n{Colors.CYAN}{Colors.BRIGHT}Environment Variables{Colors.RESET}")
+        print(f"\n{Colors.CYAN}{Colors.BRIGHT}環境変数{Colors.RESET}")
         print("=" * 50)
-        print(f"{Colors.BLUE}SuperClaude API key environment variables found:{Colors.RESET}")
+        print(f"{Colors.BLUE}SuperClaudeのAPIキー環境変数が見つかりました:{Colors.RESET}")
         for env_var, value in env_vars.items():
-            # Show only first few and last few characters for security
+            # セキュリティのため、最初と最後の数文字のみ表示
             masked_value = f"{value[:4]}...{value[-4:]}" if len(value) > 8 else "***"
             print(f"  {env_var}: {masked_value}")
         
-        print(f"\n{Colors.YELLOW}Note: These environment variables will remain unless you use --cleanup-env{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}注意: これらの環境変数は --cleanup-env を使用しない限り残ります{Colors.RESET}")
     else:
-        print(f"\n{Colors.GREEN}No SuperClaude environment variables found{Colors.RESET}")
+        print(f"\n{Colors.GREEN}SuperClaudeの環境変数が見つかりませんでした{Colors.RESET}")
     
     return env_vars
 
 
 def display_uninstall_info(info: Dict[str, Any]) -> None:
-    """Display installation information before uninstall"""
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}Current Installation{Colors.RESET}")
+    """アンインストール前にインストール情報を表示"""
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}現在のインストール{Colors.RESET}")
     print("=" * 50)
     
     if not info["exists"]:
-        print(f"{Colors.YELLOW}No SuperClaude installation found{Colors.RESET}")
+        print(f"{Colors.YELLOW}SuperClaudeのインストールが見つかりません{Colors.RESET}")
         return
     
-    print(f"{Colors.BLUE}Installation Directory:{Colors.RESET} {info['install_dir']}")
+    print(f"{Colors.BLUE}インストールディレクトリ:{Colors.RESET} {info['install_dir']}")
     
     if info["components"]:
-        print(f"{Colors.BLUE}Installed Components:{Colors.RESET}")
+        print(f"{Colors.BLUE}インストール済みコンポーネント:{Colors.RESET}")
         for component, version in info["components"].items():
             print(f"  {component}: v{version}")
     
-    print(f"{Colors.BLUE}Files:{Colors.RESET} {len(info['files'])}")
-    print(f"{Colors.BLUE}Directories:{Colors.RESET} {len(info['directories'])}")
+    print(f"{Colors.BLUE}ファイル数:{Colors.RESET} {len(info['files'])}")
+    print(f"{Colors.BLUE}ディレクトリ数:{Colors.RESET} {len(info['directories'])}")
     
     if info["total_size"] > 0:
         from ...utils.ui import format_size
-        print(f"{Colors.BLUE}Total Size:{Colors.RESET} {format_size(info['total_size'])}")
+        print(f"{Colors.BLUE}合計サイズ:{Colors.RESET} {format_size(info['total_size'])}")
     
     print()
 
 
 def get_components_to_uninstall(args: argparse.Namespace, installed_components: Dict[str, str]) -> Optional[List[str]]:
-    """Determine which components to uninstall"""
+    """アンインストールするコンポーネントを決定"""
     logger = get_logger()
     
-    # Complete uninstall
+    # 完全なアンインストール
     if args.complete:
         return list(installed_components.keys())
     
-    # Explicit components specified
+    # 明示的に指定されたコンポーネント
     if args.components:
-        # Validate that specified components are installed
+        # 指定されたコンポーネントがインストールされていることを検証
         invalid_components = [c for c in args.components if c not in installed_components]
         if invalid_components:
-            logger.error(f"Components not installed: {invalid_components}")
+            logger.error(f"コンポーネントがインストールされていません: {invalid_components}")
             return None
         return args.components
     
-    # Interactive selection
+    # 対話的な選択
     return interactive_uninstall_selection(installed_components)
 
 
 def interactive_component_selection(installed_components: Dict[str, str], env_vars: Dict[str, str]) -> Optional[tuple]:
     """
-    Enhanced interactive selection with granular component options
+    詳細なコンポーネントオプションを備えた強化された対話型選択
     
     Returns:
-        Tuple of (components_to_remove, cleanup_options) or None if cancelled
+        (削除するコンポーネント, クリーンアップオプション)のタプル、またはキャンセルの場合はNone
     """
     if not installed_components:
         return []
     
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}SuperClaude Uninstall Options{Colors.RESET}")
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}SuperClaude アンインストールオプション{Colors.RESET}")
     print("=" * 60)
     
-    # Main uninstall type selection
+    # メインのアンインストールタイプの選択
     main_options = [
-        "Complete Uninstall (remove all SuperClaude components)",
-        "Custom Uninstall (choose specific components)",
-        "Cancel Uninstall"
+        "完全なアンインストール（すべてのSuperClaudeコンポーネントを削除）",
+        "カスタムアンインストール（特定のコンポーネントを選択）",
+        "アンインストールをキャンセル"
     ]
     
-    print(f"\n{Colors.BLUE}Choose uninstall type:{Colors.RESET}")
-    main_menu = Menu("Select option:", main_options)
+    print(f"\n{Colors.BLUE}アンインストールの種類を選択してください:{Colors.RESET}")
+    main_menu = Menu("オプションを選択:", main_options)
     main_choice = main_menu.display()
     
-    if main_choice == -1 or main_choice == 2:  # Cancelled
+    if main_choice == -1 or main_choice == 2:  # キャンセル
         return None
-    elif main_choice == 0:  # Complete uninstall
-        # Complete uninstall - include all components and optional cleanup
+    elif main_choice == 0:  # 完全なアンインストール
+        # 完全なアンインストール - すべてのコンポーネントとオプションのクリーンアップを含む
         cleanup_options = _ask_complete_uninstall_options(env_vars)
         return list(installed_components.keys()), cleanup_options
-    elif main_choice == 1:  # Custom uninstall
+    elif main_choice == 1:  # カスタムアンインストール
         return _custom_component_selection(installed_components, env_vars)
     
     return None
 
 
 def _ask_complete_uninstall_options(env_vars: Dict[str, str]) -> Dict[str, bool]:
-    """Ask for complete uninstall options"""
+    """完全なアンインストールオプションを尋ねる"""
     cleanup_options = {
         'remove_mcp_configs': True,
         'cleanup_env_vars': False,
         'create_restore_script': True
     }
     
-    print(f"\n{Colors.YELLOW}{Colors.BRIGHT}Complete Uninstall Options{Colors.RESET}")
-    print("This will remove ALL SuperClaude components.")
+    print(f"\n{Colors.YELLOW}{Colors.BRIGHT}完全なアンインストールオプション{Colors.RESET}")
+    print("これにより、すべてのSuperClaudeコンポーネントが削除されます。")
     
     if env_vars:
-        print(f"\n{Colors.BLUE}Environment variables found:{Colors.RESET}")
+        print(f"\n{Colors.BLUE}環境変数が見つかりました:{Colors.RESET}")
         for env_var, value in env_vars.items():
             masked_value = f"{value[:4]}...{value[-4:]}" if len(value) > 8 else "***"
             print(f"  {env_var}: {masked_value}")
         
-        cleanup_env = confirm("Also remove API key environment variables?", default=False)
+        cleanup_env = confirm("APIキーの環境変数も削除しますか？", default=False)
         cleanup_options['cleanup_env_vars'] = cleanup_env
         
         if cleanup_env:
-            create_script = confirm("Create restore script for environment variables?", default=True)
+            create_script = confirm("環境変数の復元スクリプトを作成しますか？", default=True)
             cleanup_options['create_restore_script'] = create_script
     
     return cleanup_options
 
 
 def _custom_component_selection(installed_components: Dict[str, str], env_vars: Dict[str, str]) -> Optional[tuple]:
-    """Handle custom component selection with granular options"""
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}Custom Uninstall - Choose Components{Colors.RESET}")
-    print("Select which SuperClaude components to remove:")
+    """詳細オプション付きのカスタムコンポーネント選択を処理"""
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}カスタムアンインストール - コンポーネントの選択{Colors.RESET}")
+    print("削除するSuperClaudeコンポーネントを選択してください:")
     
-    # Build component options with descriptions
+    # 説明付きのコンポーネントオプションを構築
     component_options = []
     component_keys = []
     
     component_descriptions = {
-        'core': 'Core Framework Files (CLAUDE.md, FLAGS.md, PRINCIPLES.md, etc.)',
-        'commands': 'SuperClaude Commands (commands/sc/*.md)',
-        'agents': 'Specialized Agents (agents/*.md)',
-        'mcp': 'MCP Server Configurations',
-        'mcp_docs': 'MCP Documentation',
-        'modes': 'SuperClaude Modes'
+        'core': 'コアフレームワークファイル (CLAUDE.md, FLAGS.md, PRINCIPLES.md, など)',
+        'commands': 'SuperClaudeコマンド (commands/sc/*.md)',
+        'agents': '専門エージェント (agents/*.md)',
+        'mcp': 'MCPサーバー設定',
+        'mcp_docs': 'MCPドキュメント',
+        'modes': 'SuperClaudeモード'
     }
     
     for component, version in installed_components.items():
-        description = component_descriptions.get(component, f"{component} component")
+        description = component_descriptions.get(component, f"{component} コンポーネント")
         component_options.append(f"{description}")
         component_keys.append(component)
     
-    print(f"\n{Colors.BLUE}Select components to remove:{Colors.RESET}")
-    component_menu = Menu("Components:", component_options, multi_select=True)
+    print(f"\n{Colors.BLUE}削除するコンポーネントを選択してください:{Colors.RESET}")
+    component_menu = Menu("コンポーネント:", component_options, multi_select=True)
     selections = component_menu.display()
     
     if not selections:
@@ -400,7 +400,7 @@ def _custom_component_selection(installed_components: Dict[str, str], env_vars: 
     
     selected_components = [component_keys[i] for i in selections]
     
-    # If MCP component is selected, ask about related cleanup options
+    # MCPコンポーネントが選択された場合、関連するクリーンアップオプションを尋ねる
     cleanup_options = {
         'remove_mcp_configs': 'mcp' in selected_components,
         'cleanup_env_vars': False,
@@ -410,39 +410,39 @@ def _custom_component_selection(installed_components: Dict[str, str], env_vars: 
     if 'mcp' in selected_components:
         cleanup_options.update(_ask_mcp_cleanup_options(env_vars))
     elif env_vars:
-        # Even if MCP not selected, ask about env vars if they exist
-        cleanup_env = confirm(f"Remove {len(env_vars)} API key environment variables?", default=False)
+        # MCPが選択されていなくても、env varが存在する場合は尋ねる
+        cleanup_env = confirm(f"{len(env_vars)}個のAPIキー環境変数を削除しますか？", default=False)
         cleanup_options['cleanup_env_vars'] = cleanup_env
         if cleanup_env:
-            create_script = confirm("Create restore script for environment variables?", default=True)
+            create_script = confirm("環境変数の復元スクリプトを作成しますか？", default=True)
             cleanup_options['create_restore_script'] = create_script
     
     return selected_components, cleanup_options
 
 
 def _ask_mcp_cleanup_options(env_vars: Dict[str, str]) -> Dict[str, bool]:
-    """Ask for MCP-related cleanup options"""
-    print(f"\n{Colors.YELLOW}{Colors.BRIGHT}MCP Cleanup Options{Colors.RESET}")
-    print("Since you're removing the MCP component:")
+    """MCP関連のクリーンアップオプションを尋ねる"""
+    print(f"\n{Colors.YELLOW}{Colors.BRIGHT}MCPクリーンアップオプション{Colors.RESET}")
+    print("MCPコンポーネントを削除するため:")
     
     cleanup_options = {}
     
-    # Ask about MCP server configurations
-    remove_configs = confirm("Remove MCP server configurations from .claude.json?", default=True)
+    # MCPサーバー設定について尋ねる
+    remove_configs = confirm(".claude.jsonからMCPサーバー設定を削除しますか？", default=True)
     cleanup_options['remove_mcp_configs'] = remove_configs
     
-    # Ask about API key environment variables
+    # APIキー環境変数について尋ねる
     if env_vars:
-        print(f"\n{Colors.BLUE}Related API key environment variables found:{Colors.RESET}")
+        print(f"\n{Colors.BLUE}関連するAPIキー環境変数が見つかりました:{Colors.RESET}")
         for env_var, value in env_vars.items():
             masked_value = f"{value[:4]}...{value[-4:]}" if len(value) > 8 else "***"
             print(f"  {env_var}: {masked_value}")
         
-        cleanup_env = confirm(f"Remove {len(env_vars)} API key environment variables?", default=False)
+        cleanup_env = confirm(f"{len(env_vars)}個のAPIキー環境変数を削除しますか？", default=False)
         cleanup_options['cleanup_env_vars'] = cleanup_env
         
         if cleanup_env:
-            create_script = confirm("Create restore script for environment variables?", default=True)
+            create_script = confirm("環境変数の復元スクリプトを作成しますか？", default=True)
             cleanup_options['create_restore_script'] = create_script
         else:
             cleanup_options['create_restore_script'] = True
@@ -454,30 +454,30 @@ def _ask_mcp_cleanup_options(env_vars: Dict[str, str]) -> Dict[str, bool]:
 
 
 def interactive_uninstall_selection(installed_components: Dict[str, str]) -> Optional[List[str]]:
-    """Legacy function - redirects to enhanced selection"""
+    """レガシー関数 - 強化された選択にリダイレクト"""
     env_vars = get_superclaude_environment_variables()
     result = interactive_component_selection(installed_components, env_vars)
     
     if result is None:
         return None
     
-    # For backwards compatibility, return only component list
+    # 下位互換性のため、コンポーネントリストのみを返す
     components, cleanup_options = result
     return components
 
 
 def display_preservation_info() -> None:
-    """Show what will NOT be removed (user's custom files)"""
-    print(f"\n{Colors.GREEN}{Colors.BRIGHT}Files that will be preserved:{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom commands (not in commands/sc/){Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom agents (not SuperClaude agents){Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom .claude.json configurations{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom files in shared directories{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ Claude Code settings and other tools' configurations{Colors.RESET}")
+    """削除されないもの（ユーザーのカスタムファイル）を表示"""
+    print(f"\n{Colors.GREEN}{Colors.BRIGHT}保持されるファイル:{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーのカスタムコマンド（commands/sc/にないもの）{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーのカスタムエージェント（SuperClaudeエージェントではないもの）{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーのカスタム.claude.json設定{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ 共有ディレクトリ内のユーザーのカスタムファイル{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ Claude Codeの設定および他のツールの設定{Colors.RESET}")
 
 
 def display_component_details(component: str, info: Dict[str, Any]) -> Dict[str, Any]:
-    """Get detailed information about what will be removed for a component"""
+    """コンポーネントで削除されるものの詳細情報を取得"""
     details = {
         'files': [],
         'directories': [],
@@ -490,34 +490,34 @@ def display_component_details(component: str, info: Dict[str, Any]) -> Dict[str,
     component_paths = {
         'core': {
             'files': ['CLAUDE.md', 'FLAGS.md', 'PRINCIPLES.md', 'RULES.md', 'ORCHESTRATOR.md', 'SESSION_LIFECYCLE.md'],
-            'description': 'Core framework files in ~/.claude/'
+            'description': '~/.claude/内のコアフレームワークファイル'
         },
         'commands': {
             'files': 'commands/sc/*.md',
-            'description': 'SuperClaude commands in ~/.claude/commands/sc/'
+            'description': '~/.claude/commands/sc/内のSuperClaudeコマンド'
         },
         'agents': {
             'files': 'agents/*.md',
-            'description': 'Specialized AI agents in ~/.claude/agents/'
+            'description': '~/.claude/agents/内の専門AIエージェント'
         },
         'mcp': {
-            'files': 'MCP server configurations in .claude.json',
-            'description': 'MCP server configurations'
+            'files': '.claude.json内のMCPサーバー設定',
+            'description': 'MCPサーバー設定'
         },
         'mcp_docs': {
             'files': 'MCP/*.md',
-            'description': 'MCP documentation files'
+            'description': 'MCPドキュメントファイル'
         },
         'modes': {
             'files': 'MODE_*.md',
-            'description': 'SuperClaude operational modes'
+            'description': 'SuperClaude運用モード'
         }
     }
     
     if component in component_paths:
         details['description'] = component_paths[component]['description']
         
-        # Get actual file count from metadata if available
+        # 利用可能な場合はメタデータから実際のファイル数を取得
         component_metadata = info["components"].get(component, {})
         if isinstance(component_metadata, dict):
             if 'files_count' in component_metadata:
@@ -531,14 +531,14 @@ def display_component_details(component: str, info: Dict[str, Any]) -> Dict[str,
 
 
 def display_uninstall_plan(components: List[str], args: argparse.Namespace, info: Dict[str, Any], env_vars: Dict[str, str]) -> None:
-    """Display detailed uninstall plan"""
-    print(f"\n{Colors.CYAN}{Colors.BRIGHT}Uninstall Plan{Colors.RESET}")
+    """詳細なアンインストール計画を表示"""
+    print(f"\n{Colors.CYAN}{Colors.BRIGHT}アンインストール計画{Colors.RESET}")
     print("=" * 60)
     
-    print(f"{Colors.BLUE}Installation Directory:{Colors.RESET} {info['install_dir']}")
+    print(f"{Colors.BLUE}インストールディレクトリ:{Colors.RESET} {info['install_dir']}")
     
     if components:
-        print(f"\n{Colors.BLUE}Components to remove:{Colors.RESET}")
+        print(f"\n{Colors.BLUE}削除するコンポーネント:{Colors.RESET}")
         total_files = 0
         
         for i, component_name in enumerate(components, 1):
@@ -552,48 +552,48 @@ def display_uninstall_plan(components: List[str], args: argparse.Namespace, info
                 version_str = str(version)
                 file_count = details.get('file_count', '?')
             
-            print(f"  {i}. {component_name} (v{version_str}) - {file_count} files")
+            print(f"  {i}. {component_name} (v{version_str}) - {file_count} ファイル")
             print(f"     {details['description']}")
             
             if isinstance(file_count, int):
                 total_files += file_count
         
-        print(f"\n{Colors.YELLOW}Total estimated files to remove: {total_files}{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}削除されるファイルの推定合計数: {total_files}{Colors.RESET}")
     
-    # Show detailed preservation information
-    print(f"\n{Colors.GREEN}{Colors.BRIGHT}Safety Guarantees - Will Preserve:{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom commands (not in commands/sc/){Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's custom agents (not SuperClaude agents){Colors.RESET}")
-    print(f"{Colors.GREEN}✓ User's .claude.json customizations{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ Claude Code settings and other tools' configurations{Colors.RESET}")
+    # 詳細な保存情報を表示
+    print(f"\n{Colors.GREEN}{Colors.BRIGHT}安全保証 - 保持されるもの:{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーのカスタムコマンド（commands/sc/にないもの）{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーのカスタムエージェント（SuperClaudeエージェントではないもの）{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ ユーザーの.claude.jsonのカスタマイズ{Colors.RESET}")
+    print(f"{Colors.GREEN}✓ Claude Codeの設定および他のツールの設定{Colors.RESET}")
     
-    # Show additional preserved items
+    # 追加の保存項目を表示
     preserved = []
     if args.keep_backups:
-        preserved.append("backup files")
+        preserved.append("バックアップファイル")
     if args.keep_logs:
-        preserved.append("log files")
+        preserved.append("ログファイル")
     if args.keep_settings:
-        preserved.append("user settings")
+        preserved.append("ユーザー設定")
     
     if preserved:
         for item in preserved:
             print(f"{Colors.GREEN}✓ {item}{Colors.RESET}")
     
     if args.complete:
-        print(f"\n{Colors.RED}⚠️  WARNING: Complete uninstall will remove all SuperClaude files{Colors.RESET}")
+        print(f"\n{Colors.RED}⚠️  警告: 完全なアンインストールはすべてのSuperClaudeファイルを削除します{Colors.RESET}")
     
-    # Environment variable cleanup information
+    # 環境変数のクリーンアップ情報を表示
     if env_vars:
-        print(f"\n{Colors.BLUE}Environment Variables:{Colors.RESET}")
+        print(f"\n{Colors.BLUE}環境変数:{Colors.RESET}")
         if args.cleanup_env:
-            print(f"{Colors.YELLOW}Will remove {len(env_vars)} API key environment variables:{Colors.RESET}")
+            print(f"{Colors.YELLOW}{len(env_vars)}個のAPIキー環境変数を削除します:{Colors.RESET}")
             for env_var in env_vars.keys():
                 print(f"  - {env_var}")
             if not args.no_restore_script:
-                print(f"{Colors.GREEN}  ✓ Restore script will be created{Colors.RESET}")
+                print(f"{Colors.GREEN}  ✓ 復元スクリプトが作成されます{Colors.RESET}")
         else:
-            print(f"{Colors.BLUE}Will preserve {len(env_vars)} API key environment variables:{Colors.RESET}")
+            print(f"{Colors.BLUE}{len(env_vars)}個のAPIキー環境変数を保持します:{Colors.RESET}")
             for env_var in env_vars.keys():
                 print(f"  ✓ {env_var}")
     
@@ -601,7 +601,7 @@ def display_uninstall_plan(components: List[str], args: argparse.Namespace, info
 
 
 def create_uninstall_backup(install_dir: Path, components: List[str]) -> Optional[Path]:
-    """Create backup before uninstall"""
+    """アンインストール前にバックアップを作成"""
     logger = get_logger()
     
     try:
@@ -615,115 +615,115 @@ def create_uninstall_backup(install_dir: Path, components: List[str]) -> Optiona
         
         import tarfile
         
-        logger.info(f"Creating uninstall backup: {backup_path}")
+        logger.info(f"アンインストールバックアップを作成中: {backup_path}")
         
         with tarfile.open(backup_path, "w:gz") as tar:
             for component in components:
-                # Add component files to backup
+                # バックアップにコンポーネントファイルを追加
                 settings_manager = SettingsService(install_dir)
-                # This would need component-specific backup logic
+                # これにはコンポーネント固有のバックアップロジックが必要
                 pass
         
-        logger.success(f"Backup created: {backup_path}")
+        logger.success(f"バックアップが作成されました: {backup_path}")
         return backup_path
         
     except Exception as e:
-        logger.warning(f"Could not create backup: {e}")
+        logger.warning(f"バックアップを作成できませんでした: {e}")
         return None
 
 
 def perform_uninstall(components: List[str], args: argparse.Namespace, info: Dict[str, Any], env_vars: Dict[str, str]) -> bool:
-    """Perform the actual uninstall"""
+    """実際のアンインストールを実行"""
     logger = get_logger()
     start_time = time.time()
     
     try:
-        # Create component registry
+        # コンポーネントレジストリを作成
         registry = ComponentRegistry(PROJECT_ROOT / "setup" / "components")
         registry.discover_components()
         
-        # Create component instances
+        # コンポーネントインスタンスを作成
         component_instances = registry.create_component_instances(components, args.install_dir)
         
-        # Setup progress tracking
+        # 進捗追跡を設定
         progress = ProgressBar(
             total=len(components),
-            prefix="Uninstalling: ",
+            prefix="アンインストール中: ",
             suffix=""
         )
         
-        # Uninstall components
-        logger.info(f"Uninstalling {len(components)} components...")
+        # コンポーネントをアンインストール
+        logger.info(f"{len(components)}個のコンポーネントをアンインストール中...")
         
         uninstalled_components = []
         failed_components = []
         
         for i, component_name in enumerate(components):
-            progress.update(i, f"Uninstalling {component_name}")
+            progress.update(i, f"アンインストール中 {component_name}")
             
             try:
                 if component_name in component_instances:
                     instance = component_instances[component_name]
                     if instance.uninstall():
                         uninstalled_components.append(component_name)
-                        logger.debug(f"Successfully uninstalled {component_name}")
+                        logger.debug(f"{component_name}を正常にアンインストールしました")
                     else:
                         failed_components.append(component_name)
-                        logger.error(f"Failed to uninstall {component_name}")
+                        logger.error(f"{component_name}のアンインストールに失敗しました")
                 else:
-                    logger.warning(f"Component {component_name} not found, skipping")
+                    logger.warning(f"コンポーネント {component_name} が見つかりません。スキップします")
                     
             except Exception as e:
-                logger.error(f"Error uninstalling {component_name}: {e}")
+                logger.error(f"{component_name}のアンインストール中にエラーが発生しました: {e}")
                 failed_components.append(component_name)
             
-            progress.update(i + 1, f"Processed {component_name}")
-            time.sleep(0.1)  # Brief pause for visual effect
+            progress.update(i + 1, f"処理済み {component_name}")
+            time.sleep(0.1)  # 視覚効果のための短い一時停止
         
-        progress.finish("Uninstall complete")
+        progress.finish("アンインストール完了")
         
-        # Handle complete uninstall cleanup
+        # 完全なアンインストールのクリーンアップを処理
         if args.complete:
             cleanup_installation_directory(args.install_dir, args)
         
-        # Handle environment variable cleanup
+        # 環境変数のクリーンアップを処理
         env_cleanup_success = True
         if args.cleanup_env and env_vars:
-            logger.info("Cleaning up environment variables...")
+            logger.info("環境変数をクリーンアップ中...")
             create_restore_script = not args.no_restore_script
             env_cleanup_success = cleanup_environment_variables(env_vars, create_restore_script)
             
             if env_cleanup_success:
-                logger.success(f"Removed {len(env_vars)} environment variables")
+                logger.success(f"{len(env_vars)}個の環境変数を削除しました")
             else:
-                logger.warning("Some environment variables could not be removed")
+                logger.warning("一部の環境変数を削除できませんでした")
         
-        # Show results
+        # 結果を表示
         duration = time.time() - start_time
         
         if failed_components:
-            logger.warning(f"Uninstall completed with some failures in {duration:.1f} seconds")
-            logger.warning(f"Failed components: {', '.join(failed_components)}")
+            logger.warning(f"アンインストールは{duration:.1f}秒でいくつかの失敗とともに完了しました")
+            logger.warning(f"失敗したコンポーネント: {', '.join(failed_components)}")
         else:
-            logger.success(f"Uninstall completed successfully in {duration:.1f} seconds")
+            logger.success(f"アンインストールが{duration:.1f}秒で正常に完了しました")
         
         if uninstalled_components:
-            logger.info(f"Uninstalled components: {', '.join(uninstalled_components)}")
+            logger.info(f"アンインストールされたコンポーネント: {', '.join(uninstalled_components)}")
         
         return len(failed_components) == 0
         
     except Exception as e:
-        logger.exception(f"Unexpected error during uninstall: {e}")
+        logger.exception(f"アンインストール中に予期しないエラーが発生しました: {e}")
         return False
 
 
 def cleanup_installation_directory(install_dir: Path, args: argparse.Namespace) -> None:
-    """Clean up installation directory for complete uninstall"""
+    """完全なアンインストールのためにインストールディレクトリをクリーンアップ"""
     logger = get_logger()
     file_manager = FileService()
     
     try:
-        # Preserve specific directories/files if requested
+        # 要求された場合、特定のディレクトリ/ファイルを保持
         preserve_patterns = []
         
         if args.keep_backups:
@@ -733,15 +733,15 @@ def cleanup_installation_directory(install_dir: Path, args: argparse.Namespace) 
         if args.keep_settings and not args.complete:
             preserve_patterns.append("settings.json")
         
-        # Remove installation directory contents
+        # インストールディレクトリの内容を削除
         if args.complete and not preserve_patterns:
-            # Complete removal
+            # 完全な削除
             if file_manager.remove_directory(install_dir):
-                logger.info(f"Removed installation directory: {install_dir}")
+                logger.info(f"インストールディレクトリを削除しました: {install_dir}")
             else:
-                logger.warning(f"Could not remove installation directory: {install_dir}")
+                logger.warning(f"インストールディレクトリを削除できませんでした: {install_dir}")
         else:
-            # Selective removal
+            # 選択的な削除
             for item in install_dir.iterdir():
                 should_preserve = False
                 
@@ -757,58 +757,58 @@ def cleanup_installation_directory(install_dir: Path, args: argparse.Namespace) 
                         file_manager.remove_directory(item)
                         
     except Exception as e:
-        logger.error(f"Error during cleanup: {e}")
+        logger.error(f"クリーンアップ中にエラーが発生しました: {e}")
 
 
 def run(args: argparse.Namespace) -> int:
-    """Execute uninstall operation with parsed arguments"""
+    """解析された引数でアンインストール操作を実行"""
     operation = UninstallOperation()
     operation.setup_operation_logging(args)
     logger = get_logger()
-    # ✅ Inserted validation code
+    # ✅ 挿入された検証コード
     expected_home = Path.home().resolve()
     actual_dir = args.install_dir.resolve()
 
     if not str(actual_dir).startswith(str(expected_home)):
-        print(f"\n[✗] Installation must be inside your user profile directory.")
-        print(f"    Expected prefix: {expected_home}")
-        print(f"    Provided path:   {actual_dir}")
+        print(f"\n[✗] インストールはユーザープロファイルディレクトリ内で行う必要があります。")
+        print(f"    期待されるプレフィックス: {expected_home}")
+        print(f"    指定されたパス:   {actual_dir}")
         sys.exit(1)
     
     try:
-        # Validate global arguments
+        # グローバル引数を検証
         success, errors = operation.validate_global_args(args)
         if not success:
             for error in errors:
                 logger.error(error)
             return 1
         
-        # Display header
+        # ヘッダーを表示
         if not args.quiet:
             from setup.cli.base import __version__
             display_header(
-                f"SuperClaude Uninstall v{__version__}",
-                "Removing SuperClaude framework components"
+                f"SuperClaude アンインストール v{__version__}",
+                "SuperClaudeフレームワークコンポーネントを削除中"
             )
         
-        # Get installation information
+        # インストール情報を取得
         info = get_installation_info(args.install_dir)
         
-        # Display current installation
+        # 現在のインストールを表示
         if not args.quiet:
             display_uninstall_info(info)
         
-        # Check for environment variables
+        # 環境変数を確認
         env_vars = display_environment_info() if not args.quiet else get_superclaude_environment_variables()
         
-        # Check if SuperClaude is installed
+        # SuperClaudeがインストールされているか確認
         if not info["exists"]:
-            logger.warning(f"No SuperClaude installation found in {args.install_dir}")
+            logger.warning(f"{args.install_dir}にSuperClaudeのインストールが見つかりません")
             return 0
         
-        # Get components to uninstall using enhanced selection
+        # 強化された選択を使用してアンインストールするコンポーネントを取得
         if args.components or args.complete:
-            # Non-interactive mode - use existing logic
+            # 非対話モード - 既存のロジックを使用
             components = get_components_to_uninstall(args, info["components"])
             cleanup_options = {
                 'remove_mcp_configs': 'mcp' in (components or []),
@@ -816,66 +816,66 @@ def run(args: argparse.Namespace) -> int:
                 'create_restore_script': not args.no_restore_script
             }
             if components is None:
-                logger.info("Uninstall cancelled by user")
+                logger.info("ユーザーによってアンインストールがキャンセルされました")
                 return 0
             elif not components:
-                logger.info("No components selected for uninstall")
+                logger.info("アンインストールするコンポーネントが選択されていません")
                 return 0
         else:
-            # Interactive mode - use enhanced selection
+            # 対話モード - 強化された選択を使用
             result = interactive_component_selection(info["components"], env_vars)
             if result is None:
-                logger.info("Uninstall cancelled by user")
+                logger.info("ユーザーによってアンインストールがキャンセルされました")
                 return 0
             elif not result:
-                logger.info("No components selected for uninstall")
+                logger.info("アンインストールするコンポーネントが選択されていません")
                 return 0
             
             components, cleanup_options = result
             
-            # Override command-line args with interactive choices
+            # 対話型の選択でコマンドライン引数を上書き
             args.cleanup_env = cleanup_options.get('cleanup_env_vars', False)
             args.no_restore_script = not cleanup_options.get('create_restore_script', True)
         
-        # Display uninstall plan
+        # アンインストール計画を表示
         if not args.quiet:
             display_uninstall_plan(components, args, info, env_vars)
         
-        # Confirmation
+        # 確認
         if not args.no_confirm and not args.yes:
             if args.complete:
-                warning_msg = "This will completely remove SuperClaude. Continue?"
+                warning_msg = "これによりSuperClaudeが完全に削除されます。続行しますか？"
             else:
-                warning_msg = f"This will remove {len(components)} component(s). Continue?"
+                warning_msg = f"これにより{len(components)}個のコンポーネントが削除されます。続行しますか？"
             
             if not confirm(warning_msg, default=False):
-                logger.info("Uninstall cancelled by user")
+                logger.info("ユーザーによってアンインストールがキャンセルされました")
                 return 0
         
-        # Create backup if not dry run and not keeping backups
+        # ドライランでなく、バックアップを保持しない場合はバックアップを作成
         if not args.dry_run and not args.keep_backups:
             create_uninstall_backup(args.install_dir, components)
         
-        # Perform uninstall
+        # アンインストールを実行
         success = perform_uninstall(components, args, info, env_vars)
         
         if success:
             if not args.quiet:
-                display_success("SuperClaude uninstall completed successfully!")
+                display_success("SuperClaudeのアンインストールが正常に完了しました！")
                 
                 if not args.dry_run:
-                    print(f"\n{Colors.CYAN}Uninstall complete:{Colors.RESET}")
-                    print(f"SuperClaude has been removed from {args.install_dir}")
+                    print(f"\n{Colors.CYAN}アンインストール完了:{Colors.RESET}")
+                    print(f"SuperClaudeが{args.install_dir}から削除されました")
                     if not args.complete:
-                        print(f"You can reinstall anytime using 'SuperClaude install'")
+                        print(f"'SuperClaude install'を使用していつでも再インストールできます")
                     
             return 0
         else:
-            display_error("Uninstall completed with some failures. Check logs for details.")
+            display_error("アンインストールはいくつかの失敗で完了しました。詳細はログを確認してください。")
             return 1
             
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Uninstall cancelled by user{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}ユーザーによってアンインストールがキャンセルされました{Colors.RESET}")
         return 130
     except Exception as e:
         return operation.handle_operation_error("uninstall", e)

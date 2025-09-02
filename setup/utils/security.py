@@ -1,30 +1,29 @@
 """
-Security utilities for SuperClaude installation system
-Path validation and input sanitization
+SuperClaudeインストールシステム用のセキュリティユーティリティ
+パスの検証と入力のサニタイズ
 
-This module provides comprehensive security validation for file paths and user inputs
-during SuperClaude installation. It includes protection against:
-- Directory traversal attacks
-- Installation to system directories
-- Path injection attacks
-- Cross-platform security issues
+このモジュールは、SuperClaudeのインストール中にファイルパスとユーザー入力の包括的なセキュリティ検証を提供します。
+これには、以下の保護が含まれます:
+- ディレクトリトラバーサル攻撃
+- システムディレクトリへのインストール
+- パスインジェクション攻撃
+- クロスプラットフォームのセキュリティ問題
 
-Key Features:
-- Platform-specific validation (Windows vs Unix)
-- User-friendly error messages with actionable suggestions
-- Comprehensive path normalization
-- Backward compatibility with existing validation logic
+主な機能:
+- プラットフォーム固有の検証（Windows対Unix）
+- 実行可能な提案を含むユーザーフレンドリーなエラーメッセージ
+- 包括的なパスの正規化
+- 既存の検証ロジックとの下位互換性
 
-Fixed Issues:
-- GitHub Issue #129: Fixed overly broad regex patterns that prevented installation
-  in legitimate paths containing "dev", "tmp", "bin", etc.
-- Enhanced cross-platform compatibility
-- Improved error message clarity
+修正された問題:
+- GitHub Issue #129: "dev"、"tmp"、"bin"などを含む正当なパスへのインストールを妨げていた過度に広範な正規表現パターンを修正
+- クロスプラットフォーム互換性の強化
+- エラーメッセージの明確さの向上
 
-Architecture:
-- Separated pattern categories for better maintainability
-- Platform-aware validation logic
-- Comprehensive test coverage
+アーキテクチャ:
+- 保守性を向上させるためにパターンカテゴリを分離
+- プラットフォームを意識した検証ロジック
+- 包括的なテストカバレッジ
 """
 
 import re
@@ -35,7 +34,7 @@ import urllib.parse
 
 
 class SecurityValidator:
-    """Security validation utilities"""
+    """セキュリティ検証ユーティリティ"""
     
     # Directory traversal patterns (match anywhere in path - platform independent)
     # These patterns detect common directory traversal attack vectors
@@ -48,7 +47,7 @@ class SecurityValidator:
     # Unix system directories (match only at start of path)
     # These patterns identify Unix/Linux system directories that should not be writable
     # by regular users. Using ^ anchor to match only at path start prevents false positives
-    # for user directories containing these names (e.g., /home/user/dev/ is allowed)
+    # for user directories containing these names (e.g., /home/user/dev/ は許可されています)
     UNIX_SYSTEM_PATTERNS = [
         r'^/etc/',          # System configuration files
         r'^/bin/',          # Essential command binaries
@@ -108,29 +107,29 @@ class SecurityValidator:
     @classmethod
     def validate_path(cls, path: Path, base_dir: Optional[Path] = None) -> Tuple[bool, str]:
         """
-        Validate path for security issues with enhanced cross-platform support
+        強化されたクロスプラットフォームサポートでパスのセキュリティ問題を検証します
         
-        This method performs comprehensive security validation including:
-        - Directory traversal attack detection
-        - System directory protection (platform-specific)
-        - Path length and filename validation
-        - Cross-platform path normalization
-        - User-friendly error messages
+        このメソッドは以下を含む包括的なセキュリティ検証を実行します:
+        - ディレクトリトラバーサル攻撃の検出
+        - システムディレクトリの保護（プラットフォーム固有）
+        - パスの長さとファイル名の検証
+        - クロスプラットフォームのパス正規化
+        - ユーザーフレンドリーなエラーメッセージ
         
-        Architecture:
-        - Uses both original and resolved paths for validation
-        - Applies platform-specific patterns for system directories
-        - Checks traversal patterns against original path to catch attacks before normalization
-        - Provides detailed error messages with actionable suggestions
+        アーキテクチャ:
+        - 検証に元のパスと解決されたパスの両方を使用
+        - システムディレクトリにプラットフォーム固有のパターンを適用
+        - 正規化前に攻撃をキャッチするために元のパスに対してトラバーサルパターンをチェック
+        - 実行可能な提案を含む詳細なエラーメッセージを提供
         
         Args:
-            path: Path to validate (can be relative or absolute)
-            base_dir: Base directory that path should be within (optional)
+            path: 検証するパス（相対または絶対パス）
+            base_dir: パスが含まれるべき基本ディレクトリ（オプション）
             
         Returns:
-            Tuple of (is_safe: bool, error_message: str)
-            - is_safe: True if path passes all security checks
-            - error_message: Detailed error message with suggestions if validation fails
+            (安全: bool, エラーメッセージ: str)のタプル
+            - is_safe: パスがすべてのセキュリティチェックに合格した場合はTrue
+            - error_message: 検証が失敗した場合の提案付きの詳細なエラーメッセージ
         """
         try:
             # Convert to absolute path
@@ -147,7 +146,7 @@ class SecurityValidator:
             
             # Check filename length
             if len(abs_path.name) > cls.MAX_FILENAME_LENGTH:
-                return False, f"Filename too long: {len(abs_path.name)} > {cls.MAX_FILENAME_LENGTH}"
+                return False, f"ファイル名が長すぎます: {len(abs_path.name)} > {cls.MAX_FILENAME_LENGTH}"
             
             # Check for dangerous patterns using platform-specific validation
             # Always check traversal patterns (platform independent) - use original path string
@@ -175,7 +174,7 @@ class SecurityValidator:
             # Check for dangerous filenames
             for pattern in cls.DANGEROUS_FILENAMES:
                 if re.search(pattern, abs_path.name, re.IGNORECASE):
-                    return False, f"Dangerous filename pattern detected: {pattern}"
+                    return False, f"危険なファイル名パターンが検出されました: {pattern}"
             
             # Check if path is within base directory
             if base_dir:
@@ -183,11 +182,11 @@ class SecurityValidator:
                 try:
                     abs_path.relative_to(base_abs)
                 except ValueError:
-                    return False, f"Path outside allowed directory: {abs_path} not in {base_abs}"
+                    return False, f"許可されたディレクトリ外のパス: {abs_path} がありません {base_abs}"
             
             # Check for null bytes
             if '\x00' in str(path):
-                return False, "Null byte detected in path"
+                return False, "パスにヌルバイトが検出されました"
             
             # Check for Windows reserved names
             if os.name == 'nt':
@@ -199,44 +198,44 @@ class SecurityValidator:
                 
                 name_without_ext = abs_path.stem.upper()
                 if name_without_ext in reserved_names:
-                    return False, f"Reserved Windows filename: {name_without_ext}"
+                    return False, f"予約済みのWindowsファイル名: {name_without_ext}"
             
-            return True, "Path is safe"
+            return True, "パスは安全です"
             
         except Exception as e:
-            return False, f"Path validation error: {e}"
+            return False, f"パス検証エラー: {e}"
     
     @classmethod
     def validate_file_extension(cls, path: Path) -> Tuple[bool, str]:
         """
-        Validate file extension is allowed
+        ファイル拡張子が許可されているか検証します
         
         Args:
-            path: Path to validate
+            path: 検証するパス
             
         Returns:
-            Tuple of (is_allowed: bool, message: str)
+            (許可されている: bool, メッセージ: str)のタプル
         """
         extension = path.suffix.lower()
         
         if not extension:
-            return True, "No extension (allowed)"
+            return True, "拡張子なし（許可）"
         
         if extension in cls.ALLOWED_EXTENSIONS:
-            return True, f"Extension {extension} is allowed"
+            return True, f"拡張子 {extension} は許可されています"
         else:
-            return False, f"Extension {extension} is not allowed"
+            return False, f"拡張子 {extension} は許可されていません"
     
     @classmethod
     def sanitize_filename(cls, filename: str) -> str:
         """
-        Sanitize filename by removing dangerous characters
+        危険な文字を削除してファイル名をサニタイズします
         
         Args:
-            filename: Original filename
+            filename: 元のファイル名
             
         Returns:
-            Sanitized filename
+            サニタイズされたファイル名
         """
         # Remove null bytes
         filename = filename.replace('\x00', '')
@@ -275,14 +274,14 @@ class SecurityValidator:
     @classmethod
     def sanitize_input(cls, user_input: str, max_length: int = 1000) -> str:
         """
-        Sanitize user input
+        ユーザー入力をサニタイズします
         
         Args:
-            user_input: Raw user input
-            max_length: Maximum allowed length
+            user_input: 生のユーザー入力
+            max_length: 許可される最大長
             
         Returns:
-            Sanitized input
+            サニタイズされた入力
         """
         if not user_input:
             return ""
@@ -302,39 +301,39 @@ class SecurityValidator:
     @classmethod
     def validate_url(cls, url: str) -> Tuple[bool, str]:
         """
-        Validate URL for security issues
+        URLのセキュリティ問題を検証します
         
         Args:
-            url: URL to validate
+            url: 検証するURL
             
         Returns:
-            Tuple of (is_safe: bool, message: str)
+            (安全: bool, メッセージ: str)のタプル
         """
         try:
             parsed = urllib.parse.urlparse(url)
             
             # Check scheme
             if parsed.scheme not in ['http', 'https']:
-                return False, f"Invalid scheme: {parsed.scheme}"
+                return False, f"無効なスキーム: {parsed.scheme}"
             
             # Check for localhost/private IPs (basic check)
             hostname = parsed.hostname
             if hostname:
                 if hostname.lower() in ['localhost', '127.0.0.1', '::1']:
-                    return False, "Localhost URLs not allowed"
+                    return False, "localhostのURLは許可されていません"
                 
                 # Basic private IP check
                 if hostname.startswith('192.168.') or hostname.startswith('10.') or hostname.startswith('172.'):
-                    return False, "Private IP addresses not allowed"
+                    return False, "プライベートIPアドレスは許可されていません"
             
             # Check URL length
             if len(url) > 2048:
-                return False, "URL too long"
+                return False, "URLが長すぎます"
             
-            return True, "URL is safe"
+            return True, "URLは安全です"
             
         except Exception as e:
-            return False, f"URL validation error: {e}"
+            return False, f"URL検証エラー: {e}"
     
     @classmethod
     def check_permissions(cls, path: Path, required_permissions: Set[str]) -> Tuple[bool, List[str]]:
@@ -355,7 +354,7 @@ class SecurityValidator:
                 # For non-existent paths, check parent directory
                 parent = path.parent
                 if not parent.exists():
-                    missing.append("path does not exist")
+                    missing.append("パスが存在しません")
                     return False, missing
                 path = parent
             
@@ -374,19 +373,19 @@ class SecurityValidator:
             return len(missing) == 0, missing
             
         except Exception as e:
-            missing.append(f"permission check error: {e}")
+            missing.append(f"権限チェックエラー: {e}")
             return False, missing
     
     @classmethod
     def validate_installation_target(cls, target_dir: Path) -> Tuple[bool, List[str]]:
         """
-        Validate installation target directory with enhanced Windows compatibility
+        強化されたWindows互換性でインストール先のディレクトリを検証します
         
         Args:
-            target_dir: Target installation directory
+            target_dir: ターゲットインストールディレクトリ
             
         Returns:
-            Tuple of (is_safe: bool, error_messages: List[str])
+            (安全: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
         
@@ -394,7 +393,7 @@ class SecurityValidator:
         try:
             abs_target = target_dir.resolve()
         except Exception as e:
-            errors.append(f"Cannot resolve target path: {e}")
+            errors.append(f"ターゲットパスを解決できません: {e}")
             return False, errors
             
         # Windows-specific path normalization
@@ -413,7 +412,7 @@ class SecurityValidator:
                 home_path = Path.home()
             except (RuntimeError, OSError):
                 # If we can't determine home directory, skip .claude special handling
-                cls._log_security_decision("WARN", f"Cannot determine home directory for .claude validation: {abs_target}")
+                cls._log_security_decision("WARN", f".claudeの検証のためにホームディレクトリを特定できません: {abs_target}")
                 # Fall through to regular validation
             else:
                 try:
@@ -424,7 +423,7 @@ class SecurityValidator:
                     if os.name == 'nt':
                         # Check for junction points and symbolic links on Windows
                         if cls._is_windows_junction_or_symlink(abs_target):
-                            errors.append("Installation to junction points or symbolic links is not allowed for security")
+                            errors.append("セキュリティ上の理由から、ジャンクションポイントまたはシンボリックリンクへのインストールは許可されていません")
                             return False, errors
                         
                         # Additional validation: verify it's in the current user's profile directory
@@ -438,19 +437,19 @@ class SecurityValidator:
                             except ValueError:
                                 # Path is outside user's home directory
                                 current_user = os.environ.get('USERNAME', home_path.name)
-                                errors.append(f"Installation must be in current user's directory ({current_user})")
+                                errors.append(f"インストールは現在のユーザーのディレクトリ内で行う必要があります ({current_user})")
                                 return False, errors
                     
                     # Check permissions
                     has_perms, missing = cls.check_permissions(target_dir, {'read', 'write'})
                     if not has_perms:
                         if os.name == 'nt':
-                            errors.append(f"Insufficient permissions for Windows installation: {missing}. Try running as administrator or check folder permissions.")
+                            errors.append(f"Windowsインストールのための権限が不十分です: {missing}. 管理者として実行するか、フォルダの権限を確認してみてください。")
                         else:
-                            errors.append(f"Insufficient permissions: missing {missing}")
+                            errors.append(f"権限が不十分です: 不足 {missing}")
                     
                     # Log successful validation for audit trail
-                    cls._log_security_decision("ALLOW", f"Claude directory installation validated: {abs_target}")
+                    cls._log_security_decision("ALLOW", f"Claudeディレクトリのインストールが検証されました: {abs_target}")
                     return len(errors) == 0, errors
                     
                 except ValueError:
@@ -459,7 +458,7 @@ class SecurityValidator:
                         errors.append("Claude installation must be in your user directory (e.g., C:\\Users\\YourName\\.claude)")
                     else:
                         errors.append("Claude installation must be in your home directory (e.g., ~/.claude)")
-                    cls._log_security_decision("DENY", f"Claude directory outside user home: {abs_target}")
+                    cls._log_security_decision("DENY", f"ユーザーホーム外のClaudeディレクトリ: {abs_target}")
                     return False, errors
         
         # Validate path for non-.claude directories
@@ -467,24 +466,24 @@ class SecurityValidator:
         if not is_safe:
             if os.name == 'nt':
                 # Enhanced Windows error messages
-                if "dangerous path pattern" in msg.lower():
-                    errors.append(f"Invalid Windows path: {msg}. Ensure path doesn't contain dangerous patterns or reserved directories.")
-                elif "path too long" in msg.lower():
-                    errors.append(f"Windows path too long: {msg}. Windows has a 260 character limit for most paths.")
+                if "危険なパスパターン" in msg.lower():
+                    errors.append(f"無効なWindowsパス: {msg}. パスに危険なパターンや予約されたディレクトリが含まれていないことを確認してください。")
+                elif "パスが長すぎます" in msg.lower():
+                    errors.append(f"Windowsパスが長すぎます: {msg}. Windowsでは、ほとんどのパスに260文字の制限があります。")
                 elif "reserved" in msg.lower():
-                    errors.append(f"Windows reserved name: {msg}. Avoid names like CON, PRN, AUX, NUL, COM1-9, LPT1-9.")
+                    errors.append(f"Windows予約名: {msg}. CON, PRN, AUX, NUL, COM1-9, LPT1-9のような名前は避けてください。")
                 else:
-                    errors.append(f"Invalid target path: {msg}")
+                    errors.append(f"無効なターゲットパス: {msg}")
             else:
-                errors.append(f"Invalid target path: {msg}")
+                errors.append(f"無効なターゲットパス: {msg}")
         
         # Check permissions with platform-specific guidance
         has_perms, missing = cls.check_permissions(target_dir, {'read', 'write'})
         if not has_perms:
             if os.name == 'nt':
-                errors.append(f"Insufficient Windows permissions: {missing}. Try running as administrator or check folder security settings in Properties > Security.")
+                errors.append(f"Windowsの権限が不十分です: {missing}. 管理者として実行するか、プロパティ > セキュリティでフォルダのセキュリティ設定を確認してみてください。")
             else:
-                errors.append(f"Insufficient permissions: {missing}. Try: chmod 755 {target_dir}")
+                errors.append(f"Insufficient permissions: {missing}. 試してください: chmod 755 {target_dir}")
         
         # Check if it's a system directory with enhanced messages
         system_dirs = [
@@ -501,10 +500,10 @@ class SecurityValidator:
             try:
                 if abs_target.is_relative_to(sys_dir):
                     if os.name == 'nt':
-                        errors.append(f"Cannot install to Windows system directory: {sys_dir}. Use a location in your user profile instead (e.g., C:\\Users\\YourName\\).")
+                        errors.append(f"Windowsシステムディレクトリにインストールできません: {sys_dir}. Use a location in your user profile instead (e.g., C:\\Users\\YourName\\).")
                     else:
                         errors.append(f"Cannot install to system directory: {sys_dir}. Use a location in your home directory instead (~/).")
-                    cls._log_security_decision("DENY", f"Attempted installation to system directory: {sys_dir}")
+                    cls._log_security_decision("DENY", f"システムディレクトリへのインストールが試みられました: {sys_dir}")
                     break
             except (ValueError, AttributeError):
                 # is_relative_to not available in older Python versions
@@ -520,15 +519,15 @@ class SecurityValidator:
     @classmethod
     def validate_component_files(cls, file_list: List[Tuple[Path, Path]], base_source_dir: Path, base_target_dir: Path) -> Tuple[bool, List[str]]:
         """
-        Validate list of files for component installation
+        コンポーネントインストールのためのファイルリストを検証します
         
         Args:
-            file_list: List of (source, target) path tuples
-            base_source_dir: Base source directory
-            base_target_dir: Base target directory
+            file_list: (ソース, ターゲット) パスタプルのリスト
+            base_source_dir: 基本ソースディレクトリ
+            base_target_dir: 基本ターゲットディレクトリ
             
         Returns:
-            Tuple of (all_safe: bool, error_messages: List[str])
+            (すべて安全: bool, エラーメッセージ: List[str])のタプル
         """
         errors = []
         
@@ -536,30 +535,30 @@ class SecurityValidator:
             # Validate source path
             is_safe, msg = cls.validate_path(source, base_source_dir)
             if not is_safe:
-                errors.append(f"Invalid source path {source}: {msg}")
+                errors.append(f"無効なソースパス {source}: {msg}")
             
             # Validate target path
             is_safe, msg = cls.validate_path(target, base_target_dir)
             if not is_safe:
-                errors.append(f"Invalid target path {target}: {msg}")
+                errors.append(f"無効なターゲットパス {target}: {msg}")
             
             # Validate file extension
             is_allowed, msg = cls.validate_file_extension(source)
             if not is_allowed:
-                errors.append(f"File {source}: {msg}")
+                errors.append(f"ファイル {source}: {msg}")
         
         return len(errors) == 0, errors
     
     @classmethod
     def _normalize_path_for_validation(cls, path: Path) -> str:
         """
-        Normalize path for consistent validation across platforms
+        プラットフォーム間で一貫した検証のためにパスを正規化します
         
         Args:
-            path: Path to normalize
+            path: 正規化するパス
             
         Returns:
-            Normalized path string for validation
+            検証用の正規化されたパス文字列
         """
         path_str = str(path)
         
@@ -585,38 +584,38 @@ class SecurityValidator:
     @classmethod
     def _get_user_friendly_error_message(cls, error_type: str, pattern: str, path: Path) -> str:
         """
-        Generate user-friendly error messages with actionable suggestions
+        実行可能な提案を含むユーザーフレンドリーなエラーメッセージを生成します
         
         Args:
-            error_type: Type of error (traversal, windows_system, unix_system)
-            pattern: The regex pattern that matched
-            path: The path that caused the error
+            error_type: エラーの種類 (traversal, windows_system, unix_system)
+            pattern: 一致した正規表現パターン
+            path: エラーを引き起こしたパス
             
         Returns:
-            User-friendly error message with suggestions
+            提案付きのユーザーフレンドリーなエラーメッセージ
         """
         if error_type == "traversal":
             return (
-                f"Security violation: Directory traversal pattern detected in path '{path}'. "
+                f"セキュリティ違反: パス 'でディレクトリトラバーサルパターンが検出されました{path}'. "
                 f"Paths containing '..' or '//' are not allowed for security reasons. "
                 f"Please use an absolute path without directory traversal characters."
             )
         elif error_type == "windows_system":
             if pattern == r'^c:\\windows\\':
                 return (
-                    f"Cannot install to Windows system directory '{path}'. "
+                    f"Windowsシステムディレクトリにインストールできません '{path}'. "
                     f"Please choose a location in your user directory instead, "
                     f"such as C:\\Users\\{os.environ.get('USERNAME', 'YourName')}\\.claude\\"
                 )
             elif pattern == r'^c:\\program files\\':
                 return (
-                    f"Cannot install to Program Files directory '{path}'. "
+                    f"Program Filesディレクトリにインストールできません '{path}'. "
                     f"Please choose a location in your user directory instead, "
                     f"such as C:\\Users\\{os.environ.get('USERNAME', 'YourName')}\\.claude\\"
                 )
             else:
                 return (
-                    f"Cannot install to Windows system directory '{path}'. "
+                    f"Windowsシステムディレクトリにインストールできません '{path}'. "
                     f"Please choose a location in your user directory instead."
                 )
         elif error_type == "unix_system":
@@ -633,25 +632,25 @@ class SecurityValidator:
                 r'^/sys/': "/sys (system information)"
             }
             
-            dir_desc = system_dirs.get(pattern, "system directory")
+            dir_desc = system_dirs.get(pattern, "システムディレクトリ")
             return (
                 f"Cannot install to {dir_desc} '{path}'. "
                 f"Please choose a location in your home directory instead, "
                 f"such as ~/.claude/ or ~/SuperClaude/"
             )
         else:
-            return f"Security validation failed for path '{path}'"
+            return f"パス 'のセキュリティ検証に失敗しました{path}'"
     
     @classmethod
     def _is_windows_junction_or_symlink(cls, path: Path) -> bool:
         """
-        Check if path is a Windows junction point or symbolic link
+        パスがWindowsのジャンクションポイントまたはシンボリックリンクであるかを確認します
         
         Args:
-            path: Path to check
+            path: 確認するパス
             
         Returns:
-            True if path is a junction point or symlink, False otherwise
+            パスがジャンクションポイントまたはシンボリックリンクの場合はTrue、それ以外はFalse
         """
         if os.name != 'nt':
             return False
@@ -692,11 +691,11 @@ class SecurityValidator:
     @classmethod
     def _log_security_decision(cls, action: str, message: str) -> None:
         """
-        Log security validation decisions for audit trail
+        監査証跡のためにセキュリティ検証の決定をログに記録します
         
         Args:
-            action: Security action taken (ALLOW, DENY, WARN)
-            message: Description of the decision
+            action: 実行されたセキュリティアクション (ALLOW, DENY, WARN)
+            message: 決定の説明
         """
         try:
             import logging
@@ -730,13 +729,13 @@ class SecurityValidator:
     @classmethod
     def create_secure_temp_dir(cls, prefix: str = "superclaude_") -> Path:
         """
-        Create secure temporary directory
+        安全な一時ディレクトリを作成します
         
         Args:
-            prefix: Prefix for temp directory name
+            prefix: 一時ディレクトリ名のプレフィックス
             
         Returns:
-            Path to secure temporary directory
+            安全な一時ディレクトリへのパス
         """
         import tempfile
         
@@ -749,13 +748,13 @@ class SecurityValidator:
     @classmethod
     def secure_delete(cls, path: Path) -> bool:
         """
-        Securely delete file or directory
+        ファイルまたはディレクトリを安全に削除します
         
         Args:
-            path: Path to delete
+            path: 削除するパス
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         try:
             if not path.exists():

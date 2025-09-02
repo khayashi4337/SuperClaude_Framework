@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-SuperClaude Framework Management Hub
-Unified entry point for all SuperClaude operations
+SuperClaude フレームワーク管理ハブ
+すべてのSuperClaude操作の統一エントリポイント
 
-Usage:
+使用法:
     SuperClaude install [options]
     SuperClaude update [options]
     SuperClaude uninstall [options]
@@ -27,7 +27,7 @@ setup_dir = project_root / "setup"
 if setup_dir.exists():
     sys.path.insert(0, str(setup_dir.parent))
 else:
-    print(f"Warning: Setup directory not found at {setup_dir}")
+    print(f"警告: セットアップディレクトリが見つかりません: {setup_dir}")
     sys.exit(1)
 
 
@@ -58,38 +58,38 @@ except ImportError:
 
 
 def create_global_parser() -> argparse.ArgumentParser:
-    """Create shared parser for global flags used by all commands"""
+    """すべてのコマンドで使用されるグローバルフラグの共有パーサーを作成"""
     global_parser = argparse.ArgumentParser(add_help=False)
 
     global_parser.add_argument("--verbose", "-v", action="store_true",
-                               help="Enable verbose logging")
+                               help="詳細ロギングを有効にする")
     global_parser.add_argument("--quiet", "-q", action="store_true",
-                               help="Suppress all output except errors")
+                               help="エラー以外のすべての出力を抑制")
     global_parser.add_argument("--install-dir", type=Path, default=DEFAULT_INSTALL_DIR,
-                               help=f"Target installation directory (default: {DEFAULT_INSTALL_DIR})")
+                               help=f"ターゲットインストールディレクトリ (デフォルト: {DEFAULT_INSTALL_DIR})")
     global_parser.add_argument("--dry-run", action="store_true",
-                               help="Simulate operation without making changes")
+                               help="変更を加えずに操作をシミュレート")
     global_parser.add_argument("--force", action="store_true",
-                               help="Force execution, skipping checks")
+                               help="チェックをスキップして実行を強制")
     global_parser.add_argument("--yes", "-y", action="store_true",
-                               help="Automatically answer yes to all prompts")
+                               help="すべてのプロンプトに自動的に「はい」と答える")
     global_parser.add_argument("--no-update-check", action="store_true",
-                               help="Skip checking for updates")
+                               help="更新の確認をスキップ")
     global_parser.add_argument("--auto-update", action="store_true",
-                               help="Automatically install updates without prompting")
+                               help="プロンプトなしで更新を自動的にインストールする")
 
     return global_parser
 
 
 def create_parser():
-    """Create the main CLI parser and attach subcommand parsers"""
+    """メインCLIパーサーを作成し、サブコマンドパーサーをアタッチ"""
     global_parser = create_global_parser()
 
     parser = argparse.ArgumentParser(
         prog="SuperClaude",
-        description="SuperClaude Framework Management Hub - Unified CLI",
+        description="SuperClaude フレームワーク管理ハブ - 統一CLI",
         epilog="""
-Examples:
+例:
   SuperClaude install --dry-run
   SuperClaude update --verbose
   SuperClaude backup --create
@@ -104,14 +104,14 @@ Examples:
     subparsers = parser.add_subparsers(
         dest="operation",
         title="Operations",
-        description="Framework operations to perform"
+        description="実行するフレームワーク操作"
     )
 
     return parser, subparsers, global_parser
 
 
 def setup_global_environment(args: argparse.Namespace):
-    """Set up logging and shared runtime environment based on args"""
+    """引数に基づいてロギングと共有ランタイム環境を設定"""
     # Determine log level
     if args.quiet:
         level = LogLevel.ERROR
@@ -127,33 +127,33 @@ def setup_global_environment(args: argparse.Namespace):
     # Log startup context
     logger = get_logger()
     if logger:
-        logger.debug(f"SuperClaude called with operation: {getattr(args, 'operation', 'None')}")
-        logger.debug(f"Arguments: {vars(args)}")
+        logger.debug(f"SuperClaudeが操作で呼び出されました: {getattr(args, 'operation', 'None')}")
+        logger.debug(f"引数: {vars(args)}")
 
 
 def get_operation_modules() -> Dict[str, str]:
-    """Return supported operations and their descriptions"""
+    """サポートされている操作とその説明を返す"""
     return {
-        "install": "Install SuperClaude framework components",
-        "update": "Update existing SuperClaude installation",
-        "uninstall": "Remove SuperClaude installation",
-        "backup": "Backup and restore operations"
+        "install": "SuperClaudeフレームワークコンポーネントをインストール",
+        "update": "既存のSuperClaudeインストールを更新",
+        "uninstall": "SuperClaudeのインストールを削除",
+        "backup": "バックアップと復元操作"
     }
 
 
 def load_operation_module(name: str):
-    """Try to dynamically import an operation module"""
+    """操作モジュールを動的にインポートしようとします"""
     try:
         return __import__(f"setup.cli.commands.{name}", fromlist=[name])
     except ImportError as e:
         logger = get_logger()
         if logger:
-            logger.error(f"Module '{name}' failed to load: {e}")
+            logger.error(f"モジュール '{name}' の読み込みに失敗しました: {e}")
         return None
 
 
 def register_operation_parsers(subparsers, global_parser) -> Dict[str, Callable]:
-    """Register subcommand parsers and map operation names to their run functions"""
+    """サブコマンドパーサーを登録し、操作名をその実行関数にマッピング"""
     operations = {}
     for name, desc in get_operation_modules().items():
         module = load_operation_module(name)
@@ -162,21 +162,21 @@ def register_operation_parsers(subparsers, global_parser) -> Dict[str, Callable]
             operations[name] = module.run
         else:
             # If module doesn't exist, register a stub parser and fallback to legacy
-            parser = subparsers.add_parser(name, help=f"{desc} (legacy fallback)", parents=[global_parser])
-            parser.add_argument("--legacy", action="store_true", help="Use legacy script")
+            parser = subparsers.add_parser(name, help=f"{desc} (レガシーフォールバック)", parents=[global_parser])
+            parser.add_argument("--legacy", action="store_true", help="レガシースクリプトを使用")
             operations[name] = None
     return operations
 
 
 def handle_legacy_fallback(op: str, args: argparse.Namespace) -> int:
-    """Run a legacy operation script if module is unavailable"""
+    """モジュールが利用できない場合にレガシー操作スクリプトを実行"""
     script_path = Path(__file__).parent / f"{op}.py"
 
     if not script_path.exists():
-        display_error(f"No module or legacy script found for operation '{op}'")
+        display_error(f"操作 ' にモジュールまたはレガシースクリプトが見つかりません{op}'")
         return 1
 
-    display_warning(f"Falling back to legacy script for '{op}'...")
+    display_warning(f"' のレガシースクリプトにフォールバックしています{op}'...")
 
     cmd = [sys.executable, str(script_path)]
 
@@ -193,12 +193,12 @@ def handle_legacy_fallback(op: str, args: argparse.Namespace) -> int:
     try:
         return subprocess.call(cmd)
     except Exception as e:
-        display_error(f"Legacy execution failed: {e}")
+        display_error(f"レガシー実行に失敗しました: {e}")
         return 1
 
 
 def main() -> int:
-    """Main entry point"""
+    """メインエントリポイント"""
     try:
         parser, subparsers, global_parser = create_parser()
         operations = register_operation_parsers(subparsers, global_parser)
@@ -229,8 +229,8 @@ def main() -> int:
         if not args.operation:
             if not args.quiet:
                 from SuperClaude import __version__
-                display_header(f"SuperClaude Framework v{__version__}", "Unified CLI for all operations")
-                print(f"{Colors.CYAN}Available operations:{Colors.RESET}")
+                display_header(f"SuperClaude フレームワーク v{__version__}", "すべての操作のための統一CLI")
+                print(f"{Colors.CYAN}利用可能な操作:{Colors.RESET}")
                 for op, desc in get_operation_modules().items():
                     print(f"  {op:<12} {desc}")
             return 0
@@ -238,8 +238,8 @@ def main() -> int:
         # Handle unknown operations and suggest corrections
         if args.operation not in operations:
             close = difflib.get_close_matches(args.operation, operations.keys(), n=1)
-            suggestion = f"Did you mean: {close[0]}?" if close else ""
-            display_error(f"Unknown operation: '{args.operation}'. {suggestion}")
+            suggestion = f"もしかして: {close[0]}?" if close else ""
+            display_error(f"不明な操作: '{args.operation}'. {suggestion}")
             return 1
 
         # Setup global context (logging, install path, etc.)
@@ -250,22 +250,22 @@ def main() -> int:
         run_func = operations.get(args.operation)
         if run_func:
             if logger:
-                logger.info(f"Executing operation: {args.operation}")
+                logger.info(f"操作を実行中: {args.operation}")
             return run_func(args)
         else:
             # Fallback to legacy script
             if logger:
-                logger.warning(f"Module for '{args.operation}' missing, using legacy fallback")
+                logger.warning(f"' のモジュール{args.operation}' が見つからないため、レガシーフォールバックを使用します")
             return handle_legacy_fallback(args.operation, args)
 
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Operation cancelled by user{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}ユーザーによって操作がキャンセルされました{Colors.RESET}")
         return 130
     except Exception as e:
         try:
             logger = get_logger()
             if logger:
-                logger.exception(f"Unhandled error: {e}")
+                logger.exception(f"未処理のエラー: {e}")
         except:
             print(f"{Colors.RED}[ERROR] {e}{Colors.RESET}")
         return 1

@@ -1,5 +1,5 @@
 """
-CLAUDE.md Manager for preserving user customizations while managing framework imports
+フレームワークのインポートを管理しながらユーザーのカスタマイズを保持するためのCLAUDE.mdマネージャー
 """
 
 import re
@@ -9,7 +9,7 @@ from ..utils.logger import get_logger
 
 
 class CLAUDEMdService:
-    """Manages CLAUDE.md file updates while preserving user customizations"""
+    """ユーザーのカスタマイズを保持しながらCLAUDE.mdファイルの更新を管理します"""
     
     def __init__(self, install_dir: Path):
         """
@@ -24,10 +24,10 @@ class CLAUDEMdService:
     
     def read_existing_imports(self) -> Set[str]:
         """
-        Parse CLAUDE.md for existing @import statements
+        既存の@import文をCLAUDE.mdから解析します
         
         Returns:
-            Set of already imported filenames (without @)
+            既にインポートされているファイル名のセット（@なし）
         """
         existing_imports = set()
         
@@ -43,19 +43,19 @@ class CLAUDEMdService:
             matches = re.findall(import_pattern, content, re.MULTILINE)
             existing_imports.update(matches)
             
-            self.logger.debug(f"Found existing imports: {existing_imports}")
+            self.logger.debug(f"既存のインポートが見つかりました: {existing_imports}")
             
         except Exception as e:
-            self.logger.warning(f"Could not read existing CLAUDE.md imports: {e}")
+            self.logger.warning(f"既存のCLAUDE.mdのインポートを読み込めませんでした: {e}")
         
         return existing_imports
     
     def read_existing_content(self) -> str:
         """
-        Read existing CLAUDE.md content
+        既存のCLAUDE.mdのコンテンツを読み込みます
         
         Returns:
-            Existing content or empty string if file doesn't exist
+            既存のコンテンツ、またはファイルが存在しない場合は空文字列
         """
         if not self.claude_md_path.exists():
             return ""
@@ -64,18 +64,18 @@ class CLAUDEMdService:
             with open(self.claude_md_path, 'r', encoding='utf-8') as f:
                 return f.read()
         except Exception as e:
-            self.logger.warning(f"Could not read existing CLAUDE.md: {e}")
+            self.logger.warning(f"既存のCLAUDE.mdを読み込めませんでした: {e}")
             return ""
     
     def extract_user_content(self, content: str) -> str:
         """
-        Extract user content (everything before framework imports section)
+        ユーザーコンテンツ（フレームワークのインポートセクションより前のすべて）を抽出します
         
         Args:
-            content: Full CLAUDE.md content
+            content: 完全なCLAUDE.mdのコンテンツ
             
         Returns:
-            User content without framework imports
+            フレームワークのインポートを含まないユーザーコンテンツ
         """
         # Look for framework imports section marker
         framework_marker = "# ═══════════════════════════════════════════════════\n# SuperClaude Framework Components"
@@ -90,13 +90,13 @@ class CLAUDEMdService:
     
     def organize_imports_by_category(self, files_by_category: Dict[str, List[str]]) -> str:
         """
-        Organize imports into categorized sections
+        インポートをカテゴリ別のセクションに整理します
         
         Args:
-            files_by_category: Dict mapping category names to lists of files
+            files_by_category: カテゴリ名とファイルリストをマッピングする辞書
             
         Returns:
-            Formatted import sections
+            フォーマットされたインポートセクション
         """
         if not files_by_category:
             return ""
@@ -105,7 +105,7 @@ class CLAUDEMdService:
         
         # Framework imports section header
         sections.append("# ═══════════════════════════════════════════════════")
-        sections.append("# SuperClaude Framework Components")
+        sections.append("# SuperClaude フレームワークコンポーネント")
         sections.append("# ═══════════════════════════════════════════════════")
         sections.append("")
         
@@ -121,14 +121,14 @@ class CLAUDEMdService:
     
     def add_imports(self, files: List[str], category: str = "Framework") -> bool:
         """
-        Add new imports with duplicate checking and user content preservation
+        重複チェックとユーザーコンテンツの保持を行いながら新しいインポートを追加します
         
         Args:
-            files: List of filenames to import
-            category: Category name for organizing imports
+            files: インポートするファイル名のリスト
+            category: インポートを整理するためのカテゴリ名
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         try:
             # Ensure CLAUDE.md exists
@@ -142,10 +142,10 @@ class CLAUDEMdService:
             new_files = [f for f in files if f not in existing_imports]
             
             if not new_files:
-                self.logger.info("All files already imported, no changes needed")
+                self.logger.info("すべてのファイルは既にインポートされているため、変更は不要です")
                 return True
             
-            self.logger.info(f"Adding {len(new_files)} new imports to category '{category}': {new_files}")
+            self.logger.info(f"追加中 {len(new_files)} 個の新しいインポートをカテゴリ '{category}': {new_files}")
             
             # Extract user content (preserve everything before framework section)
             user_content = self.extract_user_content(existing_content)
@@ -177,22 +177,22 @@ class CLAUDEMdService:
             with open(self.claude_md_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             
-            self.logger.success(f"Updated CLAUDE.md with {len(new_files)} new imports")
+            self.logger.success(f"CLAUDE.mdを更新しました: {len(new_files)} new imports")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to update CLAUDE.md: {e}")
+            self.logger.error(f"CLAUDE.mdの更新に失敗しました: {e}")
             return False
     
     def _parse_existing_framework_imports(self, content: str) -> Dict[str, List[str]]:
         """
-        Parse existing framework imports organized by category
+        カテゴリ別に整理された既存のフレームワークインポートを解析します
         
         Args:
-            content: Full CLAUDE.md content
+            content: 完全なCLAUDE.mdのコンテンツ
             
         Returns:
-            Dict mapping category names to lists of imported files
+            カテゴリ名とインポートされたファイルリストをマッピングする辞書
         """
         imports_by_category = {}
         
@@ -232,7 +232,7 @@ class CLAUDEMdService:
     
     def ensure_claude_md_exists(self) -> None:
         """
-        Create CLAUDE.md with default content if it doesn't exist
+        CLAUDE.mdが存在しない場合、デフォルトのコンテンツで作成します
         """
         if self.claude_md_path.exists():
             return
@@ -242,32 +242,32 @@ class CLAUDEMdService:
             self.claude_md_path.parent.mkdir(parents=True, exist_ok=True)
             
             # Default CLAUDE.md content
-            default_content = """# SuperClaude Entry Point
+            default_content = """# SuperClaude エントリポイント
 
-This file serves as the entry point for the SuperClaude framework.
-You can add your own custom instructions and configurations here.
+このファイルはSuperClaudeフレームワークのエントリポイントとして機能します。
+ここに独自のカスタム指示や設定を追加できます。
 
-The SuperClaude framework components will be automatically imported below.
+SuperClaudeフレームワークコンポーネントは以下に自動的にインポートされます。
 """
             
             with open(self.claude_md_path, 'w', encoding='utf-8') as f:
                 f.write(default_content)
             
-            self.logger.info("Created CLAUDE.md with default content")
+            self.logger.info("デフォルトのコンテンツでCLAUDE.mdを作成しました")
             
         except Exception as e:
-            self.logger.error(f"Failed to create CLAUDE.md: {e}")
+            self.logger.error(f"CLAUDE.mdの作成に失敗しました: {e}")
             raise
     
     def remove_imports(self, files: List[str]) -> bool:
         """
-        Remove specific imports from CLAUDE.md
+        CLAUDE.mdから特定のインポートを削除します
         
         Args:
-            files: List of filenames to remove from imports
+            files: インポートから削除するファイル名のリスト
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         try:
             if not self.claude_md_path.exists():
@@ -308,9 +308,9 @@ The SuperClaude framework components will be automatically imported below.
             with open(self.claude_md_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             
-            self.logger.info(f"Removed {len(files)} imports from CLAUDE.md")
+            self.logger.info(f"削除済み {len(files)} 個のインポートをCLAUDE.mdから")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to remove imports from CLAUDE.md: {e}")
+            self.logger.error(f"CLAUDE.mdからのインポートの削除に失敗しました: {e}")
             return False

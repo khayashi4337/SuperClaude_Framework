@@ -21,7 +21,7 @@ class AgentsComponent(Component):
         return {
             "name": "agents",
             "version": __version__,
-            "description": "14 specialized AI agents with domain expertise and intelligent routing",
+            "description": "ドメイン専門知識とインテリジェントなルーティングを備えた14の専門AIエージェント",
             "category": "agents"
         }
     
@@ -40,7 +40,7 @@ class AgentsComponent(Component):
     
     def _install(self, config: Dict[str, Any]) -> bool:
         """Install agents component"""
-        self.logger.info("Installing SuperClaude specialized agents...")
+        self.logger.info("SuperClaude専門AIエージェントをインストール中...")
         
         # Call parent install method
         success = super()._install(config)
@@ -50,7 +50,7 @@ class AgentsComponent(Component):
             success = self._post_install()
         
         if success:
-            self.logger.success(f"Successfully installed {len(self.component_files)} specialized agents")
+            self.logger.success(f"{len(self.component_files)}個の専門AIエージェントが正常にインストールされました")
         
         return success
     
@@ -60,7 +60,7 @@ class AgentsComponent(Component):
             # Update metadata with agents registration
             metadata_mods = self.get_metadata_modifications()
             self.settings_manager.update_metadata(metadata_mods)
-            self.logger.info("Updated metadata with agents configuration")
+            self.logger.info("メタデータをエージェント設定で更新しました")
             
             # Add component registration
             self.settings_manager.add_component_registration("agents", {
@@ -70,17 +70,17 @@ class AgentsComponent(Component):
                 "agents_list": self.component_files
             })
             
-            self.logger.info("Registered agents component in metadata")
+            self.logger.info("メタデータにエージェントコンポーネントを登録しました")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to complete agents post-install: {e}")
+            self.logger.error(f"エージェントのインストール後処理を完了できませんでした: {e}")
             return False
     
     def uninstall(self) -> bool:
         """Uninstall agents component"""
         try:
-            self.logger.info("Uninstalling SuperClaude agents component...")
+            self.logger.info("SuperClaudeエージェントコンポーネントをアンインストール中...")
             
             # Remove agent files
             removed_count = 0
@@ -88,31 +88,31 @@ class AgentsComponent(Component):
                 file_path = self.install_component_subdir / filename
                 if self.file_manager.remove_file(file_path):
                     removed_count += 1
-                    self.logger.debug(f"Removed agent: {filename}")
+                    self.logger.debug(f"エージェントを削除しました: {filename}")
                 else:
-                    self.logger.warning(f"Could not remove agent: {filename}")
+                    self.logger.warning(f"エージェントを削除できませんでした: {filename}")
             
             # Remove agents directory if empty
             try:
                 if self.install_component_subdir.exists() and not any(self.install_component_subdir.iterdir()):
                     self.install_component_subdir.rmdir()
-                    self.logger.debug("Removed empty agents directory")
+                    self.logger.debug("空のエージェントディレクトリを削除しました")
             except Exception as e:
-                self.logger.warning(f"Could not remove agents directory: {e}")
+                self.logger.warning(f"エージェントディレクトリを削除できませんでした: {e}")
             
             # Update metadata to remove agents component
             try:
                 if self.settings_manager.is_component_installed("agents"):
                     self.settings_manager.remove_component_registration("agents")
-                    self.logger.info("Removed agents component from metadata")
+                    self.logger.info("メタデータからエージェントコンポーネントを削除しました")
             except Exception as e:
-                self.logger.warning(f"Could not update metadata: {e}")
+                self.logger.warning(f"メタデータを更新できませんでした: {e}")
             
-            self.logger.success(f"Agents component uninstalled ({removed_count} agents removed)")
+            self.logger.success(f"エージェントコンポーネントがアンインストールされました（{removed_count}個のエージェントを削除）")
             return True
             
         except Exception as e:
-            self.logger.exception(f"Unexpected error during agents uninstallation: {e}")
+            self.logger.exception(f"エージェントのアンインストール中に予期しないエラーが発生しました: {e}")
             return False
     
     def get_dependencies(self) -> List[str]:
@@ -122,17 +122,17 @@ class AgentsComponent(Component):
     def update(self, config: Dict[str, Any]) -> bool:
         """Update agents component"""
         try:
-            self.logger.info("Updating SuperClaude agents component...")
+            self.logger.info("SuperClaudeエージェントコンポーネントを更新中...")
             
             # Check current version
             current_version = self.settings_manager.get_component_version("agents")
             target_version = self.get_metadata()["version"]
             
             if current_version == target_version:
-                self.logger.info(f"Agents component already at version {target_version}")
+                self.logger.info(f"エージェントコンポーネントは既にバージョン{target_version}です")
                 return True
             
-            self.logger.info(f"Updating agents component from {current_version} to {target_version}")
+            self.logger.info(f"エージェントコンポーネントを{current_version}から{target_version}に更新中")
             
             # Create backup of existing agents
             backup_files = []
@@ -142,26 +142,26 @@ class AgentsComponent(Component):
                     backup_path = self.file_manager.backup_file(file_path)
                     if backup_path:
                         backup_files.append(backup_path)
-                        self.logger.debug(f"Backed up agent: {filename}")
+                        self.logger.debug(f"エージェントをバックアップしました: {filename}")
             
             # Perform installation (will overwrite existing files)
             if self._install(config):
-                self.logger.success(f"Agents component updated to version {target_version}")
+                self.logger.success(f"エージェントコンポーネントがバージョン{target_version}に更新されました")
                 return True
             else:
                 # Restore backups on failure
-                self.logger.error("Agents update failed, restoring backups...")
+                self.logger.error("エージェントの更新に失敗しました。バックアップを復元しています...")
                 for backup_path in backup_files:
                     try:
                         original_path = self.install_component_subdir / backup_path.name.replace('.backup', '')
                         self.file_manager.copy_file(backup_path, original_path)
-                        self.logger.debug(f"Restored {original_path.name}")
+                        self.logger.debug(f"復元しました {original_path.name}")
                     except Exception as e:
-                        self.logger.warning(f"Could not restore {backup_path}: {e}")
+                        self.logger.warning(f"{backup_path}を復元できませんでした: {e}")
                 return False
                 
         except Exception as e:
-            self.logger.exception(f"Unexpected error during agents update: {e}")
+            self.logger.exception(f"エージェントの更新中に予期しないエラーが発生しました: {e}")
             return False
     
     def _get_source_dir(self) -> Path:
@@ -204,7 +204,7 @@ class AgentsComponent(Component):
         
         # Check if agents directory exists
         if not self.install_component_subdir.exists():
-            errors.append(f"Agents directory not found: {self.install_component_subdir}")
+            errors.append(f"エージェントディレクトリが見つかりません: {self.install_component_subdir}")
             return False, errors
         
         # Check if all agent files exist
@@ -215,11 +215,11 @@ class AgentsComponent(Component):
                 missing_agents.append(filename)
         
         if missing_agents:
-            errors.append(f"Missing agent files: {missing_agents}")
+            errors.append(f"エージェントファイルが見つかりません: {missing_agents}")
         
         # Check version in metadata
         if not self.get_installed_version():
-            errors.append("Agents component not registered in metadata")
+            errors.append("エージェントコンポーネントがメタデータに登録されていません")
         
         # Check if at least some standard agents are present
         expected_agents = [
@@ -235,6 +235,6 @@ class AgentsComponent(Component):
                 missing_core_agents.append(agent)
         
         if missing_core_agents:
-            errors.append(f"Missing core agent files: {missing_core_agents}")
+            errors.append(f"コアエージェントファイルが見つかりません: {missing_core_agents}")
         
         return len(errors) == 0, errors

@@ -1,6 +1,6 @@
 """
-Auto-update checker for SuperClaude Framework
-Checks PyPI for newer versions and offers automatic updates
+SuperClaudeフレームワークの自動更新チェッカー
+PyPIで新しいバージョンをチェックし、自動更新を提供します
 """
 
 import os
@@ -20,7 +20,7 @@ from .logger import get_logger
 
 
 class UpdateChecker:
-    """Handles automatic update checking for SuperClaude"""
+    """SuperClaudeの自動更新チェックを処理します"""
     
     PYPI_URL = "https://pypi.org/pypi/SuperClaude/json"
     CACHE_FILE = Path.home() / ".claude" / ".update_check"
@@ -29,23 +29,23 @@ class UpdateChecker:
     
     def __init__(self, current_version: str):
         """
-        Initialize update checker
+        更新チェッカーを初期化します
         
         Args:
-            current_version: Current installed version
+            current_version: 現在インストールされているバージョン
         """
         self.current_version = current_version
         self.logger = get_logger()
         
     def should_check_update(self, force: bool = False) -> bool:
         """
-        Determine if we should check for updates based on last check time
+        最終チェック時間に基づいて更新を確認すべきかどうかを判断します
         
         Args:
-            force: Force check regardless of last check time
+            force: 最終チェック時間に関係なくチェックを強制
             
         Returns:
-            True if update check should be performed
+            更新チェックを実行すべき場合はTrue
         """
         if force:
             return True
@@ -68,7 +68,7 @@ class UpdateChecker:
         return False
         
     def save_check_timestamp(self):
-        """Save the current timestamp as last check time"""
+        """現在のタイムスタンプを最終チェック時間として保存"""
         self.CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         
         data = {}
@@ -86,10 +86,10 @@ class UpdateChecker:
             
     def get_latest_version(self) -> Optional[str]:
         """
-        Query PyPI for the latest version of SuperClaude
+        PyPIにSuperClaudeの最新バージョンを問い合わせます
         
         Returns:
-            Latest version string or None if check fails
+            最新のバージョン文字列、またはチェックが失敗した場合はNone
         """
         try:
             # Create request with timeout
@@ -104,28 +104,28 @@ class UpdateChecker:
                 latest = data.get('info', {}).get('version')
                 
             if self.logger:
-                self.logger.debug(f"Latest PyPI version: {latest}")
+                self.logger.debug(f"最新のPyPIバージョン: {latest}")
                 
             return latest
             
         except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as e:
             if self.logger:
-                self.logger.debug(f"Failed to check PyPI: {e}")
+                self.logger.debug(f"PyPIのチェックに失敗しました: {e}")
             return None
         except Exception as e:
             if self.logger:
-                self.logger.debug(f"Unexpected error checking updates: {e}")
+                self.logger.debug(f"更新の確認中に予期しないエラーが発生しました: {e}")
             return None
             
     def compare_versions(self, latest: str) -> bool:
         """
-        Compare current version with latest version
+        現在のバージョンと最新バージョンを比較します
         
         Args:
-            latest: Latest version string
+            latest: 最新のバージョン文字列
             
         Returns:
-            True if update is available
+            更新が利用可能な場合はTrue
         """
         try:
             return version.parse(latest) > version.parse(self.current_version)
@@ -134,10 +134,10 @@ class UpdateChecker:
             
     def detect_installation_method(self) -> str:
         """
-        Detect how SuperClaude was installed (pip, pipx, etc.)
+        SuperClaudeがどのようにインストールされたか（pip, pipxなど）を検出します
         
         Returns:
-            Installation method string
+            インストール方法の文字列
         """
         # Check pipx first
         try:
@@ -172,10 +172,10 @@ class UpdateChecker:
         
     def get_update_command(self) -> str:
         """
-        Get the appropriate update command based on installation method
+        インストール方法に基づいて適切な更新コマンドを取得します
         
         Returns:
-            Update command string
+            更新コマンド文字列
         """
         method = self.detect_installation_method()
         
@@ -190,21 +190,21 @@ class UpdateChecker:
         
     def show_update_banner(self, latest: str, auto_update: bool = False) -> bool:
         """
-        Display update available banner
+        利用可能な更新のバナーを表示します
         
         Args:
-            latest: Latest version available
-            auto_update: Whether to auto-update without prompting
+            latest: 利用可能な最新バージョン
+            auto_update: プロンプトなしで自動更新するかどうか
             
         Returns:
-            True if user wants to update
+            ユーザーが更新を希望する場合はTrue
         """
         update_cmd = self.get_update_command()
         
         # Display banner
         print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════╗{Colors.RESET}")
-        print(f"{Colors.CYAN}║{Colors.YELLOW}  🚀 Update Available: {self.current_version} → {latest}        {Colors.CYAN}║{Colors.RESET}")
-        print(f"{Colors.CYAN}║{Colors.GREEN}  Run: {update_cmd:<30} {Colors.CYAN}║{Colors.RESET}")
+        print(f"{Colors.CYAN}║{Colors.YELLOW}  🚀 更新が利用可能です: {self.current_version} → {latest}        {Colors.CYAN}║{Colors.RESET}")
+        print(f"{Colors.CYAN}║{Colors.GREEN}  実行: {update_cmd:<30} {Colors.CYAN}║{Colors.RESET}")
         print(f"{Colors.CYAN}╚════════════════════════════════════════════════╝{Colors.RESET}\n")
         
         if auto_update:
@@ -223,14 +223,14 @@ class UpdateChecker:
             
     def perform_update(self) -> bool:
         """
-        Execute the update command
+        更新コマンドを実行します
         
         Returns:
-            True if update succeeded
+            更新が成功した場合はTrue
         """
         update_cmd = self.get_update_command()
         
-        print(f"{Colors.CYAN}🔄 Updating SuperClaude...{Colors.RESET}")
+        print(f"{Colors.CYAN}🔄 SuperClaudeを更新中...{Colors.RESET}")
         
         try:
             result = subprocess.run(
@@ -240,29 +240,29 @@ class UpdateChecker:
             )
             
             if result.returncode == 0:
-                display_success("Update completed successfully!")
-                print(f"{Colors.YELLOW}Please restart SuperClaude to use the new version.{Colors.RESET}")
+                display_success("更新が正常に完了しました！")
+                print(f"{Colors.YELLOW}新しいバージョンを使用するには、SuperClaudeを再起動してください。{Colors.RESET}")
                 return True
             else:
-                display_warning("Update failed. Please run manually:")
+                display_warning("更新に失敗しました。手動で実行してください:")
                 print(f"  {update_cmd}")
                 return False
                 
         except Exception as e:
-            display_warning(f"Could not auto-update: {e}")
-            print(f"Please run manually: {update_cmd}")
+            display_warning(f"自動更新できませんでした: {e}")
+            print(f"手動で実行してください: {update_cmd}")
             return False
             
     def check_and_notify(self, force: bool = False, auto_update: bool = False) -> bool:
         """
-        Main method to check for updates and notify user
+        更新を確認してユーザーに通知するメインメソッド
         
         Args:
-            force: Force check regardless of last check time
-            auto_update: Automatically update if available
+            force: 最終チェック時間に関係なくチェックを強制
+            auto_update: 利用可能な場合は自動的に更新
             
         Returns:
-            True if update was performed
+            更新が実行された場合はTrue
         """
         # Check if we should skip based on environment variable
         if os.getenv('SUPERCLAUDE_NO_UPDATE_CHECK', '').lower() in ['true', '1', 'yes']:
@@ -297,14 +297,14 @@ class UpdateChecker:
 
 def check_for_updates(current_version: str = None, **kwargs) -> bool:
     """
-    Convenience function to check for updates
+    更新を確認するための便利な関数
     
     Args:
-        current_version: Current installed version (defaults to reading from setup)
-        **kwargs: Additional arguments passed to check_and_notify
+        current_version: 現在インストールされているバージョン（デフォルトはsetupから読み取り）
+        **kwargs: check_and_notifyに渡される追加の引数
         
     Returns:
-        True if update was performed
+            更新が実行された場合はTrue
     """
     if current_version is None:
         from setup import __version__

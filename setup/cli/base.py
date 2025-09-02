@@ -1,7 +1,7 @@
 """
-SuperClaude CLI Base Module
+SuperClaude CLI ベースモジュール
 
-Base class for all CLI operations providing common functionality
+すべてのCLI操作に共通機能を提供する基底クラス
 """
 
 from pathlib import Path
@@ -14,46 +14,46 @@ except Exception:
 
 
 def get_command_info():
-    """Get information about available commands"""
+    """利用可能なコマンドに関する情報を取得します"""
     return {
         "install": {
             "name": "install",
-            "description": "Install SuperClaude framework components",
+            "description": "SuperClaudeフレームワークコンポーネントをインストールします",
             "module": "setup.cli.commands.install"
         },
         "update": {
             "name": "update", 
-            "description": "Update existing SuperClaude installation",
+            "description": "既存のSuperClaudeインストールを更新します",
             "module": "setup.cli.commands.update"
         },
         "uninstall": {
             "name": "uninstall",
-            "description": "Remove SuperClaude framework installation", 
+            "description": "SuperClaudeフレームワークのインストールを削除します",
             "module": "setup.cli.commands.uninstall"
         },
         "backup": {
             "name": "backup",
-            "description": "Backup and restore SuperClaude installations",
+            "description": "SuperClaudeのインストールをバックアップおよび復元します",
             "module": "setup.cli.commands.backup"
         }
     }
 
 
 class OperationBase:
-    """Base class for all operations providing common functionality"""
+    """すべての操作に共通機能を提供する基底クラス"""
     
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
         self.logger = None
     
     def setup_operation_logging(self, args):
-        """Setup operation-specific logging"""
+        """操作固有のロギングを設定します"""
         from ..utils.logger import get_logger
         self.logger = get_logger()
-        self.logger.info(f"Starting {self.operation_name} operation")
+        self.logger.info(f"開始中 {self.operation_name} operation")
     
     def validate_global_args(self, args):
-        """Validate global arguments common to all operations"""
+        """すべての操作に共通のグローバル引数を検証します"""
         errors = []
         
         # Validate install directory
@@ -66,14 +66,14 @@ class OperationBase:
         # Check for conflicting flags
         if hasattr(args, 'verbose') and hasattr(args, 'quiet'):
             if args.verbose and args.quiet:
-                errors.append("Cannot specify both --verbose and --quiet")
+                errors.append("--verboseと--quietは同時に指定できません")
         
         return len(errors) == 0, errors
     
-    def handle_operation_error(self, operation: str, error: Exception):
-        """Standard error handling for operations"""
+    def handle_operation_error(self, 操作: str, error: Exception):
+        """操作の標準エラー処理"""
         if self.logger:
-            self.logger.exception(f"Error in {operation} operation: {error}")
+            self.logger.exception(f"エラー: {operation} 操作: {error}")
         else:
-            print(f"Error in {operation} operation: {error}")
+            print(f"エラー: {operation} 操作: {error}")
         return 1

@@ -1,5 +1,5 @@
 """
-Component registry for auto-discovery and dependency resolution
+自動検出と依存関係解決のためのコンポーネントレジストリ
 """
 
 import importlib
@@ -11,14 +11,14 @@ from ..utils.logger import get_logger
 
 
 class ComponentRegistry:
-    """Auto-discovery and management of installable components"""
+    """インストール可能なコンポーネントの自動検出と管理"""
     
     def __init__(self, components_dir: Path):
         """
-        Initialize component registry
+        コンポーネントレジストリを初期化します
         
         Args:
-            components_dir: Directory containing component modules
+            components_dir: コンポーネントモジュールを含むディレクトリ
         """
         self.components_dir = components_dir
         self.component_classes: Dict[str, Type[Component]] = {}
@@ -29,10 +29,10 @@ class ComponentRegistry:
     
     def discover_components(self, force_reload: bool = False) -> None:
         """
-        Auto-discover all component classes in components directory
+        componentsディレクトリ内のすべてのコンポーネントクラスを自動検出します
         
         Args:
-            force_reload: Force rediscovery even if already done
+            force_reload: 既に実行済みでも再検出を強制します
         """
         if self._discovered and not force_reload:
             return
@@ -72,17 +72,17 @@ class ComponentRegistry:
     
     def _load_component_module(self, module_name: str) -> None:
         """
-        Load component classes from a module
+        モジュールからコンポーネントクラスを読み込みます
         
         Args:
-            module_name: Name of module to load
+            module_name: 読み込むモジュールの名前
         """
         try:
             # Import the module
             full_module_name = f"setup.components.{module_name}"
             module = importlib.import_module(full_module_name)
             
-            # Find all Component subclasses in the module
+            # Find all コンポーネント subclasses in the module
             for name, obj in inspect.getmembers(module):
                 if (inspect.isclass(obj) and 
                     issubclass(obj, Component) and 
@@ -98,44 +98,44 @@ class ComponentRegistry:
                         self.component_instances[component_name] = instance
                         
                     except Exception as e:
-                        self.logger.warning(f"Could not instantiate component {name}: {e}")
+                        self.logger.warning(f"コンポーネントをインスタンス化できませんでした {name}: {e}")
         
         except Exception as e:
-            self.logger.warning(f"Could not load component module {module_name}: {e}")
+            self.logger.warning(f"コンポーネントモジュールを読み込めませんでした {module_name}: {e}")
     
     def _build_dependency_graph(self) -> None:
-        """Build dependency graph for all discovered components"""
+        """検出されたすべてのコンポーネントの依存関係グラフを構築"""
         for name, instance in self.component_instances.items():
             try:
                 dependencies = instance.get_dependencies()
                 self.dependency_graph[name] = set(dependencies)
             except Exception as e:
-                self.logger.warning(f"Could not get dependencies for {name}: {e}")
+                self.logger.warning(f"依存関係を取得できませんでした: {name}: {e}")
                 self.dependency_graph[name] = set()
     
     def get_component_class(self, component_name: str) -> Optional[Type[Component]]:
         """
-        Get component class by name
+        名前でコンポーネントクラスを取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Component class or None if not found
+            コンポーネントクラス、見つからない場合はNone
         """
         self.discover_components()
         return self.component_classes.get(component_name)
     
     def get_component_instance(self, component_name: str, install_dir: Optional[Path] = None) -> Optional[Component]:
         """
-        Get component instance by name
+        名前でコンポーネントインスタンスを取得します
         
         Args:
-            component_name: Name of component
-            install_dir: Installation directory (creates new instance with this dir)
+            component_name: コンポーネント名
+            install_dir: インストールディレクトリ（このディレクトリで新しいインスタンスを作成）
             
         Returns:
-            Component instance or None if not found
+            コンポーネントインスタンス、見つからない場合はNone
         """
         self.discover_components()
         
@@ -146,30 +146,30 @@ class ComponentRegistry:
                 try:
                     return component_class(install_dir)
                 except Exception as e:
-                    self.logger.error(f"Error creating component instance {component_name}: {e}")
+                    self.logger.error(f"コンポーネントインスタンスの作成エラー {component_name}: {e}")
                     return None
         
         return self.component_instances.get(component_name)
     
     def list_components(self) -> List[str]:
         """
-        Get list of all discovered component names
+        検出されたすべてのコンポーネント名のリストを取得します
         
         Returns:
-            List of component names
+            コンポーネント名のリスト
         """
         self.discover_components()
         return list(self.component_classes.keys())
     
     def get_component_metadata(self, component_name: str) -> Optional[Dict[str, str]]:
         """
-        Get metadata for a component
+        コンポーネントのメタデータを取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Component metadata dict or None if not found
+            コンポーネントのメタデータ辞書、見つからない場合はNone
         """
         self.discover_components()
         instance = self.component_instances.get(component_name)
@@ -182,16 +182,16 @@ class ComponentRegistry:
     
     def resolve_dependencies(self, component_names: List[str]) -> List[str]:
         """
-        Resolve component dependencies in correct installation order
+        正しいインストール順序でコンポーネントの依存関係を解決します
         
         Args:
-            component_names: List of component names to install
+            component_names: インストールするコンポーネント名のリスト
             
         Returns:
-            Ordered list of component names including dependencies
+            依存関係を含む、順序付けされたコンポーネント名のリスト
             
         Raises:
-            ValueError: If circular dependencies detected or unknown component
+            ValueError: 循環依存が検出されたか、不明なコンポーネントがある場合
         """
         self.discover_components()
         
@@ -203,10 +203,10 @@ class ComponentRegistry:
                 return
                 
             if name in resolving:
-                raise ValueError(f"Circular dependency detected involving {name}")
+                raise ValueError(f"循環依存が検出されました: {name}")
                 
             if name not in self.dependency_graph:
-                raise ValueError(f"Unknown component: {name}")
+                raise ValueError(f"不明なコンポーネント: {name}")
                 
             resolving.add(name)
             
@@ -225,26 +225,26 @@ class ComponentRegistry:
     
     def get_dependencies(self, component_name: str) -> Set[str]:
         """
-        Get direct dependencies for a component
+        コンポーネントの直接の依存関係を取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Set of dependency component names
+            依存コンポーネント名のセット
         """
         self.discover_components()
         return self.dependency_graph.get(component_name, set())
     
     def get_dependents(self, component_name: str) -> Set[str]:
         """
-        Get components that depend on the given component
+        指定されたコンポーネントに依存するコンポーネントを取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Set of component names that depend on this component
+            このコンポーネントに依存するコンポーネント名のセット
         """
         self.discover_components()
         dependents = set()
@@ -257,10 +257,10 @@ class ComponentRegistry:
     
     def validate_dependency_graph(self) -> List[str]:
         """
-        Validate dependency graph for cycles and missing dependencies
+        依存関係グラフの循環と欠落している依存関係を検証します
         
         Returns:
-            List of validation errors (empty if valid)
+            検証エラーのリスト（有効な場合は空）
         """
         self.discover_components()
         errors = []
@@ -270,7 +270,7 @@ class ComponentRegistry:
         for name, deps in self.dependency_graph.items():
             missing_deps = deps - all_components
             if missing_deps:
-                errors.append(f"Component {name} has missing dependencies: {missing_deps}")
+                errors.append(f"コンポーネント {name} には不足している依存関係があります: {missing_deps}")
         
         # Check for circular dependencies
         for name in all_components:
@@ -283,13 +283,13 @@ class ComponentRegistry:
     
     def get_components_by_category(self, category: str) -> List[str]:
         """
-        Get components filtered by category
+        カテゴリでフィルタリングされたコンポーネントを取得します
         
         Args:
-            category: Component category to filter by
+            category: フィルタリングするコンポーネントカテゴリ
             
         Returns:
-            List of component names in the category
+            カテゴリ内のコンポーネント名のリスト
         """
         self.discover_components()
         components = []
@@ -306,14 +306,13 @@ class ComponentRegistry:
     
     def get_installation_order(self, component_names: List[str]) -> List[List[str]]:
         """
-        Get installation order grouped by dependency levels
+        依存関係レベルでグループ化されたインストール順序を取得します
         
         Args:
-            component_names: List of component names to install
+            component_names: インストールするコンポーネント名のリスト
             
         Returns:
-            List of lists, where each inner list contains components
-            that can be installed in parallel at that dependency level
+            リストのリスト。各内部リストには、その依存関係レベルで並行してインストールできるコンポーネントが含まれます
         """
         self.discover_components()
         
@@ -336,7 +335,7 @@ class ComponentRegistry:
             
             if not current_level:
                 # This shouldn't happen if dependency graph is valid
-                raise ValueError("Circular dependency detected in installation order calculation")
+                raise ValueError("インストール順序の計算で循環依存が検出されました")
             
             levels.append(current_level)
             remaining -= set(current_level)
@@ -345,14 +344,14 @@ class ComponentRegistry:
     
     def create_component_instances(self, component_names: List[str], install_dir: Optional[Path] = None) -> Dict[str, Component]:
         """
-        Create instances for multiple components
+        複数のコンポーネントのインスタンスを作成します
         
         Args:
-            component_names: List of component names
-            install_dir: Installation directory for instances
+            component_names: コンポーネント名のリスト
+            install_dir: インスタンスのインストールディレクトリ
             
         Returns:
-            Dict mapping component names to instances
+            コンポーネント名とインスタンスをマッピングする辞書
         """
         self.discover_components()
         instances = {}
@@ -362,16 +361,16 @@ class ComponentRegistry:
             if instance:
                 instances[name] = instance
             else:
-                self.logger.warning(f"Could not create instance for component {name}")
+                self.logger.warning(f"コンポーネントのインスタンスを作成できませんでした {name}")
         
         return instances
     
     def get_registry_info(self) -> Dict[str, any]:
         """
-        Get comprehensive registry information
+        包括的なレジストリ情報を取得します
         
         Returns:
-            Dict with registry statistics and component info
+            レジストリの統計とコンポーネント情報を含む辞書
         """
         self.discover_components()
         

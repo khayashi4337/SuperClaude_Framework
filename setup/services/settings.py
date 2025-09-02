@@ -41,7 +41,7 @@ class SettingsService:
             with open(self.settings_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
-            raise ValueError(f"Could not load settings from {self.settings_file}: {e}")
+            raise ValueError(f"設定を読み込めませんでした: {self.settings_file}: {e}")
     
     def save_settings(self, settings: Dict[str, Any], create_backup: bool = True) -> None:
         """
@@ -63,7 +63,7 @@ class SettingsService:
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False, sort_keys=True)
         except IOError as e:
-            raise ValueError(f"Could not save settings to {self.settings_file}: {e}")
+            raise ValueError(f"設定を保存できませんでした: {self.settings_file}: {e}")
     
     def load_metadata(self) -> Dict[str, Any]:
         """
@@ -79,7 +79,7 @@ class SettingsService:
             with open(self.metadata_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
-            raise ValueError(f"Could not load metadata from {self.metadata_file}: {e}")
+            raise ValueError(f"メタデータを読み込めませんでした: {self.metadata_file}: {e}")
     
     def save_metadata(self, metadata: Dict[str, Any]) -> None:
         """
@@ -96,28 +96,28 @@ class SettingsService:
             with open(self.metadata_file, 'w', encoding='utf-8') as f:
                 json.dump(metadata, f, indent=2, ensure_ascii=False, sort_keys=True)
         except IOError as e:
-            raise ValueError(f"Could not save metadata to {self.metadata_file}: {e}")
+            raise ValueError(f"メタデータを保存できませんでした: {self.metadata_file}: {e}")
 
     def merge_metadata(self, modifications: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Deep merge modifications into existing settings
+        既存の設定に変更をディープマージします
 
         Args:
-            modifications: Settings modifications to merge
+            modifications: マージする設定変更
 
         Returns:
-            Merged settings dict
+            マージされた設定辞書
         """
         existing = self.load_metadata()
         return self._deep_merge(existing, modifications)
 
     def update_metadata(self, modifications: Dict[str, Any]) -> None:
         """
-        Update settings with modifications
+        変更を加えて設定を更新します
 
         Args:
-            modifications: Settings modifications to apply
-            create_backup: Whether to create backup before updating
+            modifications: 適用する設定変更
+            create_backup: 更新前にバックアップを作成するかどうか
         """
         merged = self.merge_metadata(modifications)
         self.save_metadata(merged)
@@ -186,14 +186,14 @@ class SettingsService:
     
     def get_setting(self, key_path: str, default: Any = None) -> Any:
         """
-        Get setting value using dot-notation path
+        ドット表記のパスを使用して設定値を取得します
         
         Args:
-            key_path: Dot-separated path (e.g., "hooks.enabled")
-            default: Default value if key not found
+            key_path: ドットで区切られたパス (例: "hooks.enabled")
+            default: キーが見つからない場合のデフォルト値
             
         Returns:
-            Setting value or default
+            設定値またはデフォルト値
         """
         settings = self.load_settings()
         
@@ -207,12 +207,12 @@ class SettingsService:
     
     def set_setting(self, key_path: str, value: Any, create_backup: bool = True) -> None:
         """
-        Set setting value using dot-notation path
+        ドット表記のパスを使用して設定値を設定します
         
         Args:
-            key_path: Dot-separated path (e.g., "hooks.enabled")
-            value: Value to set
-            create_backup: Whether to create backup before updating
+            key_path: ドットで区切られたパス (例: "hooks.enabled")
+            value: 設定する値
+            create_backup: 更新前にバックアップを作成するかどうか
         """
         # Build nested dict structure
         keys = key_path.split('.')
@@ -229,14 +229,14 @@ class SettingsService:
     
     def remove_setting(self, key_path: str, create_backup: bool = True) -> bool:
         """
-        Remove setting using dot-notation path
+        ドット表記のパスを使用して設定を削除します
         
         Args:
-            key_path: Dot-separated path to remove
-            create_backup: Whether to create backup before updating
+            key_path: 削除するドットで区切られたパス
+            create_backup: 更新前にバックアップを作成するかどうか
             
         Returns:
-            True if setting was removed, False if not found
+            設定が削除された場合はTrue、見つからない場合はFalse
         """
         settings = self.load_settings()
         keys = key_path.split('.')
@@ -260,11 +260,11 @@ class SettingsService:
     
     def add_component_registration(self, component_name: str, component_info: Dict[str, Any]) -> None:
         """
-        Add component to registry in metadata
+        メタデータのレジストリにコンポーネントを追加します
         
         Args:
-            component_name: Name of component
-            component_info: Component metadata dict
+            component_name: コンポーネント名
+            component_info: コンポーネントメタデータ辞書
         """
         metadata = self.load_metadata()
         if "components" not in metadata:
@@ -279,13 +279,13 @@ class SettingsService:
     
     def remove_component_registration(self, component_name: str) -> bool:
         """
-        Remove component from registry in metadata
+        メタデータのレジストリからコンポーネントを削除します
         
         Args:
-            component_name: Name of component to remove
+            component_name: 削除するコンポーネント名
             
         Returns:
-            True if component was removed, False if not found
+            コンポーネントが削除された場合はTrue、見つからない場合はFalse
         """
         metadata = self.load_metadata()
         if "components" in metadata and component_name in metadata["components"]:
@@ -296,36 +296,36 @@ class SettingsService:
     
     def get_installed_components(self) -> Dict[str, Dict[str, Any]]:
         """
-        Get all installed components from registry
+        レジストリからインストールされているすべてのコンポーネントを取得します
         
         Returns:
-            Dict of component_name -> component_info
+            component_name -> component_info の辞書
         """
         metadata = self.load_metadata()
         return metadata.get("components", {})
     
     def is_component_installed(self, component_name: str) -> bool:
         """
-        Check if component is registered as installed
+        コンポーネントがインストール済みとして登録されているか確認します
         
         Args:
-            component_name: Name of component to check
+            component_name: 確認するコンポーネント名
             
         Returns:
-            True if component is installed, False otherwise
+            コンポーネントがインストールされている場合はTrue、それ以外はFalse
         """
         components = self.get_installed_components()
         return component_name in components
     
     def get_component_version(self, component_name: str) -> Optional[str]:
         """
-        Get installed version of component
+        インストールされているコンポーネントのバージョンを取得します
         
         Args:
-            component_name: Name of component
+            component_name: コンポーネント名
             
         Returns:
-            Version string or None if not installed
+            インストールされている場合はバージョン文字列、それ以外はNone
         """
         components = self.get_installed_components()
         component_info = components.get(component_name, {})
@@ -333,10 +333,10 @@ class SettingsService:
     
     def update_framework_version(self, version: str) -> None:
         """
-        Update SuperClaude framework version in metadata
+        メタデータ内のSuperClaudeフレームワークのバージョンを更新します
         
         Args:
-            version: Framework version string
+            version: フレームワークのバージョン文字列
         """
         metadata = self.load_metadata()
         if "framework" not in metadata:
@@ -358,23 +358,23 @@ class SettingsService:
 
     def check_v2_installation_exists(self) -> bool:
         """
-        Get SuperClaude framework version from metadata
+        メタデータからSuperClaudeフレームワークのバージョンを取得します
 
         Returns:
-            Version string or None if not set
+            バージョン文字列、設定されていない場合はNone
         """
         return self.settings_file.exists()
     
     def get_metadata_setting(self, key_path: str, default: Any = None) -> Any:
         """
-        Get metadata value using dot-notation path
+        ドット表記のパスを使用してメタデータ値を取得します
         
         Args:
-            key_path: Dot-separated path (e.g., "framework.version")
-            default: Default value if key not found
+            key_path: ドットで区切られたパス (例: "framework.version")
+            default: キーが見つからない場合のデフォルト値
             
         Returns:
-            Metadata value or default
+            メタデータ値またはデフォルト値
         """
         metadata = self.load_metadata()
         
@@ -388,14 +388,14 @@ class SettingsService:
     
     def _deep_merge(self, base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Deep merge two dictionaries
+        2つの辞書をディープマージします
         
         Args:
-            base: Base dictionary
-            overlay: Dictionary to merge on top
+            base: 基本となる辞書
+            overlay: 上にマージする辞書
             
         Returns:
-            Merged dictionary
+            マージされた辞書
         """
         result = copy.deepcopy(base)
         
@@ -415,7 +415,7 @@ class SettingsService:
             Path to backup file
         """
         if not self.settings_file.exists():
-            raise ValueError("Cannot backup non-existent settings file")
+            raise ValueError("存在しない設定ファイルはバックアップできません")
         
         # Create backup directory
         self.backup_dir.mkdir(parents=True, exist_ok=True)
@@ -433,10 +433,10 @@ class SettingsService:
     
     def _cleanup_old_backups(self, keep_count: int = 10) -> None:
         """
-        Remove old backup files, keeping only the most recent
+        古いバックアップファイルを削除し、最新のもののみを保持します
         
         Args:
-            keep_count: Number of backups to keep
+            keep_count: 保持するバックアップの数
         """
         if not self.backup_dir.exists():
             return
@@ -457,10 +457,10 @@ class SettingsService:
     
     def list_backups(self) -> List[Dict[str, Any]]:
         """
-        List available settings backups
+        利用可能な設定のバックアップを一覧表示します
         
         Returns:
-            List of backup info dicts with name, path, and timestamp
+            名前、パス、タイムスタンプを含むバックアップ情報辞書のリスト
         """
         if not self.backup_dir.exists():
             return []
@@ -485,13 +485,13 @@ class SettingsService:
     
     def restore_backup(self, backup_name: str) -> bool:
         """
-        Restore settings from backup
+        バックアップから設定を復元します
         
         Args:
-            backup_name: Name of backup file to restore
+            backup_name: 復元するバックアップファイルの名前
             
         Returns:
-            True if successful, False otherwise
+            成功した場合はTrue、それ以外はFalse
         """
         backup_file = self.backup_dir / backup_name
         

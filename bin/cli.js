@@ -5,7 +5,7 @@ const { checkAndNotify } = require("./checkUpdate");
 
 let pythonCmd = detectPython();
 if (!pythonCmd) {
-  console.error("❌ Python 3 is required but not found.");
+  console.error("❌ Python 3が必要ですが、見つかりません。");
   process.exit(1);
 }
 
